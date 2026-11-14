@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 
@@ -15,16 +16,16 @@ import (
 )
 
 // The fake CPA host and the scripted upstream used by the snapshot tests.
-// Adapted from cpa-wokey-plugin's fakehost_test.go: the host goes through
-// the plugin's RPCs (auth.parse, model.for_auth) instead of calling its
-// internals, and every callback is recorded for the snapshot.
+// The host goes through the plugin's RPCs (auth.parse, model.for_auth)
+// instead of calling its internals, and every callback is recorded for the
+// snapshot.
 
-// fakeAuthDir is the auth directory the fake host reports.
-const fakeAuthDir = "/auths"
+// snapshotAuthDir is the auth directory the fake host reports.
+const snapshotAuthDir = "/auths"
 
-// fakeHostSummary is the host config summary the fake host sends with
+// snapshotHostSummary is the host config summary the fake host sends with
 // auth.parse and model.for_auth.
-var fakeHostSummary = pluginapi.HostConfigSummary{AuthDir: fakeAuthDir}
+var snapshotHostSummary = pluginapi.HostConfigSummary{AuthDir: snapshotAuthDir}
 
 // cpaAuthModelRequest mirrors CPA's rpcAuthModelRequest.
 type cpaAuthModelRequest struct {
@@ -32,8 +33,18 @@ type cpaAuthModelRequest struct {
 	HostCallbackID string `json:"host_callback_id,omitempty"`
 }
 
-// fakeAuthFile is one auth file held by fakeHost.
-type fakeAuthFile struct {
+// snapshotAuthList is the host.auth.list result.
+type snapshotAuthList struct {
+	Files []pluginapi.HostAuthFileEntry `json:"files"`
+}
+
+// snapshotCaller is the plugin as the fake host sees it.
+type snapshotCaller interface {
+	Call(method string, request []byte) []byte
+}
+
+// snapshotAuthFile is one auth file held by snapshotHost.
+type snapshotAuthFile struct {
 	index    string
 	name     string
 	provider string
@@ -45,38 +56,41 @@ type fakeAuthFile struct {
 	models []string
 }
 
-// hostCallRecord is one callback the plugin made.
-type hostCallRecord struct {
+// snapshotHostRecord is one callback the plugin made.
+type snapshotHostRecord struct {
 	method  string
 	request []byte
 }
 
-// fakeHost is an in-memory stand-in for the CPA host callbacks. Saving a
+// snapshotHost is an in-memory stand-in for the CPA host callbacks. Saving a
 // file makes CPA parse it with auth.parse and register its models with
 // model.for_auth, as CPA does.
-type fakeHost struct {
-	svc *Service
+type snapshotHost struct {
+	plugin     snapshotCaller
+	providerID string
 
 	mu        sync.Mutex
-	files     []*fakeAuthFile
+	files     []*snapshotAuthFile
 	nextIndex int
-	calls     []hostCallRecord
+	calls     []snapshotHostRecord
 }
 
-func newFakeHost() *fakeHost {
-	return &fakeHost{}
+func snapshotOKResult(v any) []byte {
+	rawResult, errMarshal := json.Marshal(v)
+	if errMarshal != nil {
+		return snapshotFailResult(errMarshal.Error())
+	}
+	raw, _ := json.Marshal(pluginabi.Envelope{OK: true, Result: rawResult})
+	return raw
 }
 
-func okResult(v any) []byte {
-	return okEnvelope(v)
-}
-
-func failResult(message string) []byte {
-	return ErrorEnvelope("host_error", message)
+func snapshotFailResult(message string) []byte {
+	raw, _ := json.Marshal(pluginabi.Envelope{OK: false, Error: &pluginabi.Error{Code: "host_error", Message: message}})
+	return raw
 }
 
 // takeCalls returns the callbacks recorded since the last call.
-func (h *fakeHost) takeCalls() []hostCallRecord {
+func (h *snapshotHost) takeCalls() []snapshotHostRecord {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	calls := h.calls
@@ -84,13 +98,13 @@ func (h *fakeHost) takeCalls() []hostCallRecord {
 	return calls
 }
 
-func (h *fakeHost) call(method string, request []byte) ([]byte, error) {
+func (h *snapshotHost) call(method string, request []byte) ([]byte, error) {
 	h.mu.Lock()
-	h.calls = append(h.calls, hostCallRecord{method: method, request: append([]byte(nil), request...)})
+	h.calls = append(h.calls, snapshotHostRecord{method: method, request: append([]byte(nil), request...)})
 	h.mu.Unlock()
 	switch method {
 	case pluginabi.MethodHostLog, pluginabi.MethodHostStreamEmit, pluginabi.MethodHostStreamClose:
-		return okResult(struct{}{}), nil
+		return snapshotOKResult(struct{}{}), nil
 	case pluginabi.MethodHostAuthList:
 		h.mu.Lock()
 		defer h.mu.Unlock()
@@ -105,27 +119,27 @@ func (h *fakeHost) call(method string, request []byte) ([]byte, error) {
 				Label:     file.label,
 				Disabled:  file.disabled,
 				Source:    "file",
-				Path:      path.Join(fakeAuthDir, file.name),
+				Path:      path.Join(snapshotAuthDir, file.name),
 			})
 		}
-		return okResult(rpcHostAuthListResponse{Files: files}), nil
+		return snapshotOKResult(snapshotAuthList{Files: files}), nil
 	case pluginabi.MethodHostAuthGet:
 		var req pluginapi.HostAuthGetRequest
 		if errUnmarshal := json.Unmarshal(request, &req); errUnmarshal != nil {
-			return failResult(errUnmarshal.Error()), nil
+			return snapshotFailResult(errUnmarshal.Error()), nil
 		}
 		h.mu.Lock()
 		defer h.mu.Unlock()
 		for _, file := range h.files {
 			if file.index == req.AuthIndex {
-				return okResult(pluginapi.HostAuthGetResponse{AuthIndex: file.index, Name: file.name, Path: path.Join(fakeAuthDir, file.name), JSON: file.raw}), nil
+				return snapshotOKResult(pluginapi.HostAuthGetResponse{AuthIndex: file.index, Name: file.name, Path: path.Join(snapshotAuthDir, file.name), JSON: file.raw}), nil
 			}
 		}
-		return failResult("auth not found"), nil
+		return snapshotFailResult("auth not found"), nil
 	case pluginabi.MethodHostAuthSave:
 		var req pluginapi.HostAuthSaveRequest
 		if errUnmarshal := json.Unmarshal(request, &req); errUnmarshal != nil {
-			return failResult(errUnmarshal.Error()), nil
+			return snapshotFailResult(errUnmarshal.Error()), nil
 		}
 		return h.save(req), nil
 	case pluginabi.MethodHostAuthModels:
@@ -138,27 +152,27 @@ func (h *fakeHost) call(method string, request []byte) ([]byte, error) {
 			}
 			out.Credentials = append(out.Credentials, pluginapi.HostAuthModels{ID: file.name, AuthIndex: file.index, Provider: file.provider, Models: append([]string{}, file.models...)})
 		}
-		return okResult(out), nil
+		return snapshotOKResult(out), nil
 	default:
-		return failResult("unexpected host method " + method), nil
+		return snapshotFailResult("unexpected host method " + method), nil
 	}
 }
 
 // save mimics host.auth.save: CPA parses the file through the plugin, then
 // asks it for the credential's models. The lock is released while calling
 // into the plugin, which may call back into the host.
-func (h *fakeHost) save(req pluginapi.HostAuthSaveRequest) []byte {
+func (h *snapshotHost) save(req pluginapi.HostAuthSaveRequest) []byte {
 	name := path.Base(req.Name)
 	if !strings.HasSuffix(strings.ToLower(name), ".json") {
-		return failResult("auth file name must end with .json")
+		return snapshotFailResult("auth file name must end with .json")
 	}
 	raw := append([]byte(nil), req.JSON...)
 	parsed, errParse := h.parse(name, raw)
 	if errParse != "" {
-		return failResult(errParse)
+		return snapshotFailResult(errParse)
 	}
 	if !parsed.Handled {
-		return failResult("no provider handled the auth file")
+		return snapshotFailResult("no provider handled the auth file")
 	}
 	var models []string
 	if !parsed.Auth.Disabled {
@@ -169,7 +183,7 @@ func (h *fakeHost) save(req pluginapi.HostAuthSaveRequest) []byte {
 	file := h.fileLocked(name)
 	if file == nil {
 		h.nextIndex++
-		file = &fakeAuthFile{index: fmt.Sprintf("idx-%d", h.nextIndex), name: name}
+		file = &snapshotAuthFile{index: fmt.Sprintf("idx-%d", h.nextIndex), name: name}
 		h.files = append(h.files, file)
 	}
 	file.provider = parsed.Auth.Provider
@@ -177,14 +191,14 @@ func (h *fakeHost) save(req pluginapi.HostAuthSaveRequest) []byte {
 	file.raw = raw
 	file.disabled = parsed.Auth.Disabled
 	file.models = models
-	return okResult(pluginapi.HostAuthSaveResponse{Name: name, Path: path.Join(fakeAuthDir, name)})
+	return snapshotOKResult(pluginapi.HostAuthSaveResponse{Name: name, Path: path.Join(snapshotAuthDir, name)})
 }
 
 // parse runs auth.parse for a file.
-func (h *fakeHost) parse(name string, raw []byte) (pluginapi.AuthParseResponse, string) {
-	request, _ := json.Marshal(pluginapi.AuthParseRequest{Provider: ProviderID, Path: path.Join(fakeAuthDir, name), FileName: name, RawJSON: raw, Host: fakeHostSummary})
+func (h *snapshotHost) parse(name string, raw []byte) (pluginapi.AuthParseResponse, string) {
+	request, _ := json.Marshal(pluginapi.AuthParseRequest{Provider: h.providerID, Path: path.Join(snapshotAuthDir, name), FileName: name, RawJSON: raw, Host: snapshotHostSummary})
 	var out pluginapi.AuthParseResponse
-	if errCall := decodeRPCResult(h.svc.Call(pluginabi.MethodAuthParse, request), &out); errCall != "" {
+	if errCall := snapshotDecodeResult(h.plugin.Call(pluginabi.MethodAuthParse, request), &out); errCall != "" {
 		return out, errCall
 	}
 	return out, ""
@@ -192,22 +206,22 @@ func (h *fakeHost) parse(name string, raw []byte) (pluginapi.AuthParseResponse, 
 
 // register runs model.for_auth for a parsed file and returns the model IDs
 // CPA registers for it.
-func (h *fakeHost) register(name string, raw []byte, auth pluginapi.AuthData) []string {
+func (h *snapshotHost) register(name string, raw []byte, auth pluginapi.AuthData) []string {
 	request, _ := json.Marshal(cpaAuthModelRequest{AuthModelRequest: pluginapi.AuthModelRequest{
 		AuthID:       name,
 		AuthProvider: auth.Provider,
 		StorageJSON:  raw,
 		Metadata:     auth.Metadata,
-		Host:         fakeHostSummary,
+		Host:         snapshotHostSummary,
 	}})
 	var resp pluginapi.ModelResponse
-	if errCall := decodeRPCResult(h.svc.Call(pluginabi.MethodModelForAuth, request), &resp); errCall != "" {
+	if errCall := snapshotDecodeResult(h.plugin.Call(pluginabi.MethodModelForAuth, request), &resp); errCall != "" {
 		return nil
 	}
-	return cpaPrefixedIDs(resp.Models, cpaAuthPrefix(auth), fakeHostSummary.ForceModelPrefix)
+	return cpaPrefixedIDs(resp.Models, cpaAuthPrefix(auth), snapshotHostSummary.ForceModelPrefix)
 }
 
-func decodeRPCResult(raw []byte, out any) string {
+func snapshotDecodeResult(raw []byte, out any) string {
 	var envelope pluginabi.Envelope
 	if errUnmarshal := json.Unmarshal(raw, &envelope); errUnmarshal != nil {
 		return errUnmarshal.Error()
@@ -224,7 +238,7 @@ func decodeRPCResult(raw []byte, out any) string {
 	return ""
 }
 
-func (h *fakeHost) fileLocked(name string) *fakeAuthFile {
+func (h *snapshotHost) fileLocked(name string) *snapshotAuthFile {
 	for _, file := range h.files {
 		if file.name == name {
 			return file
@@ -265,7 +279,7 @@ func cpaPrefixedIDs(models []pluginapi.ModelInfo, prefix string, force bool) []s
 // seed stores an auth file directly, as if CPA had loaded it from the auth
 // directory at startup. Its provider and disabled flag come from the file;
 // no models are registered for it until it is saved.
-func (h *fakeHost) seed(name string, raw []byte) {
+func (h *snapshotHost) seed(name string, raw []byte) {
 	var fields struct {
 		Type     string `json:"type"`
 		Label    string `json:"label"`
@@ -275,7 +289,7 @@ func (h *fakeHost) seed(name string, raw []byte) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.nextIndex++
-	h.files = append(h.files, &fakeAuthFile{
+	h.files = append(h.files, &snapshotAuthFile{
 		index:    fmt.Sprintf("idx-%d", h.nextIndex),
 		name:     name,
 		provider: fields.Type,
@@ -285,8 +299,8 @@ func (h *fakeHost) seed(name string, raw []byte) {
 	})
 }
 
-// upstreamReply is one scripted upstream response.
-type upstreamReply struct {
+// snapshotReply is one scripted upstream response.
+type snapshotReply struct {
 	Method string      `json:"method"`
 	Path   string      `json:"path"`
 	Status int         `json:"status"`
@@ -295,8 +309,8 @@ type upstreamReply struct {
 	Chunks []string    `json:"chunks"`
 }
 
-// upstreamRecord is one request the scripted upstream received.
-type upstreamRecord struct {
+// snapshotUpstreamRequest is one request the scripted upstream received.
+type snapshotUpstreamRequest struct {
 	Method string      `json:"method"`
 	Path   string      `json:"path"`
 	Query  string      `json:"query"`
@@ -304,19 +318,19 @@ type upstreamRecord struct {
 	Body   string      `json:"body"`
 }
 
-// scriptedUpstream answers each request with the next scripted reply for
+// snapshotUpstream answers each request with the next scripted reply for
 // its method and path and records what it received.
-type scriptedUpstream struct {
+type snapshotUpstream struct {
 	*httptest.Server
 
 	mu        sync.Mutex
-	queues    map[string][]upstreamReply
-	requests  []upstreamRecord
+	queues    map[string][]snapshotReply
+	requests  []snapshotUpstreamRequest
 	unmatched []string
 }
 
-func newScriptedUpstream(script []upstreamReply) *scriptedUpstream {
-	u := &scriptedUpstream{queues: map[string][]upstreamReply{}}
+func newSnapshotUpstream(script []snapshotReply) *snapshotUpstream {
+	u := &snapshotUpstream{queues: map[string][]snapshotReply{}}
 	for _, reply := range script {
 		key := reply.Method + " " + reply.Path
 		u.queues[key] = append(u.queues[key], reply)
@@ -325,13 +339,13 @@ func newScriptedUpstream(script []upstreamReply) *scriptedUpstream {
 	return u
 }
 
-func (u *scriptedUpstream) serve(rw http.ResponseWriter, r *http.Request) {
+func (u *snapshotUpstream) serve(rw http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	key := r.Method + " " + r.URL.Path
 	u.mu.Lock()
-	u.requests = append(u.requests, upstreamRecord{Method: r.Method, Path: r.URL.Path, Query: r.URL.RawQuery, Header: r.Header.Clone(), Body: string(body)})
+	u.requests = append(u.requests, snapshotUpstreamRequest{Method: r.Method, Path: r.URL.Path, Query: r.URL.RawQuery, Header: r.Header.Clone(), Body: string(body)})
 	queue := u.queues[key]
-	var reply upstreamReply
+	var reply snapshotReply
 	matched := len(queue) > 0
 	if matched {
 		reply, u.queues[key] = queue[0], queue[1:]
@@ -344,7 +358,7 @@ func (u *scriptedUpstream) serve(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for name, values := range reply.Header {
-		rw.Header()[name] = append([]string(nil), values...)
+		rw.Header()[http.CanonicalHeaderKey(name)] = append([]string(nil), values...)
 	}
 	status := reply.Status
 	if status == 0 {
@@ -367,7 +381,7 @@ func (u *scriptedUpstream) serve(rw http.ResponseWriter, r *http.Request) {
 
 // take returns the requests received since the last call and the
 // unscripted ones among them.
-func (u *scriptedUpstream) take() ([]upstreamRecord, []string) {
+func (u *snapshotUpstream) take() ([]snapshotUpstreamRequest, []string) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	requests, unmatched := u.requests, u.unmatched
@@ -376,7 +390,7 @@ func (u *scriptedUpstream) take() ([]upstreamRecord, []string) {
 }
 
 // leftover lists the scripted replies nobody asked for.
-func (u *scriptedUpstream) leftover() []string {
+func (u *snapshotUpstream) leftover() []string {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	var out []string
@@ -385,5 +399,6 @@ func (u *scriptedUpstream) leftover() []string {
 			out = append(out, key)
 		}
 	}
+	sort.Strings(out)
 	return out
 }

@@ -1,41 +1,44 @@
 package plugin
 
-import "time"
+import (
+	"testing"
+	"time"
+)
 
 // Snapshot seams: the only place the RPC snapshot tests reach into the
 // Service's unexported state. Everything else drives the plugin through
-// Service.Call and the host callbacks, so after the refactor only this file
-// has to be rewritten against the new internals.
+// Service.Call and the host callbacks.
 
-// snapshotClock is the time the service clock is pinned to. It shows up as
-// the status "now", catalog and Go usage fetch times and the auth refresh
-// horizon, and it keeps the account cache from expiring inside a case.
-var snapshotClock = time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+// snapshotProviderID is the auth provider the fake host parses files for.
+const snapshotProviderID = ProviderID
 
-// pinSnapshotClock fixes the service clock. The request log and the proxy
-// store keep their own wall clocks; their timestamps are normalised instead.
-func pinSnapshotClock(svc *Service) {
+// snapshotConcurrentPaths are the upstream routes the plugin calls
+// concurrently; OpenCode has none.
+var snapshotConcurrentPaths []string
+
+// snapshotNewService builds the service the way main.go does, then pins the
+// clock, keeps plugin.register from starting the catalog refresh loop and
+// points the egress check at the fake upstream.
+func snapshotNewService(version string, host HostCaller, egressCheckURLs []string) *Service {
+	svc := New(version, host)
 	svc.now = func() time.Time { return snapshotClock }
-}
-
-// holdBackgroundRefresh keeps plugin.register from starting the catalog
-// refresh loop. A refresh that register queues is then run, or dropped, by
-// the runner at a deterministic point.
-func holdBackgroundRefresh(svc *Service) {
 	svc.loopOnce.Do(func() {})
+	svc.egressCheckURLs = append([]string(nil), egressCheckURLs...)
+	return svc
 }
 
-// dropQueuedRefresh discards a queued catalog refresh without running it.
-func dropQueuedRefresh(svc *Service) {
+// snapshotDropQueuedRefresh discards a queued catalog refresh without
+// running it.
+func snapshotDropQueuedRefresh(svc *Service) {
 	select {
 	case <-svc.kick:
 	default:
 	}
 }
 
-// runQueuedRefresh runs, synchronously, the refresh the background loop
-// would run for a queued kick, and reports whether one was queued.
-func runQueuedRefresh(svc *Service) bool {
+// snapshotRunQueuedRefresh runs, synchronously, the refresh the background
+// loop would run for a queued kick, and reports whether one was queued.
+func snapshotRunQueuedRefresh(svc *Service) bool {
 	select {
 	case <-svc.kick:
 		_, _ = svc.refreshCatalog(false)
@@ -45,8 +48,17 @@ func runQueuedRefresh(svc *Service) bool {
 	}
 }
 
-// waitForStreams blocks until every background stream pump has closed its
+// snapshotWaitIdle blocks until every background stream pump has closed its
 // host stream and written its request log entry.
-func waitForStreams(svc *Service) {
+func snapshotWaitIdle(svc *Service) {
 	svc.streams.Wait()
+}
+
+// snapshotSkeletons are the generated inputs of the cases.
+func snapshotSkeletons(t *testing.T) []snapshotFixture {
+	var out []snapshotFixture
+	for _, c := range snapshotCases() {
+		out = append(out, c.fixture(t))
+	}
+	return out
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/router-for-me/CLIProxyAPI/v8/sdk/pluginabi"
 	"github.com/router-for-me/CLIProxyAPI/v8/sdk/pluginapi"
+	"gopkg.in/yaml.v3"
 )
 
 // snapshotCases generates the inputs of fixtures that do not exist yet
@@ -43,7 +44,7 @@ type snapshotCase struct {
 	// config is the plugin config object; nil means snapshotConfig().
 	config      map[string]any
 	credentials []caseCredential
-	script      []upstreamReply
+	script      []snapshotReply
 	steps       []caseStep
 }
 
@@ -83,7 +84,7 @@ func (c snapshotCase) fixture(t *testing.T) snapshotFixture {
 		Case:           c.name,
 		Description:    c.description,
 		Setup:          snapshotSetup{Version: snapshotVersion, Config: caseJSON(t, config), Credentials: []snapshotCredential{}},
-		UpstreamScript: []upstreamReply{},
+		UpstreamScript: []snapshotReply{},
 		Steps:          []snapshotStep{},
 	}
 	for i, cred := range c.credentials {
@@ -277,7 +278,7 @@ func modelsForAuthStep(cred caseCredential, force bool) caseStep {
 		AuthProvider: "opencode",
 		StorageJSON:  cred.raw(),
 		Metadata:     cred.metadata(),
-		Host:         pluginapi.HostConfigSummary{AuthDir: fakeAuthDir, ForceModelPrefix: force},
+		Host:         pluginapi.HostConfigSummary{AuthDir: snapshotAuthDir, ForceModelPrefix: force},
 	}, HostCallbackID: hostCallbackID}}
 }
 
@@ -305,25 +306,25 @@ func bare(method string) caseStep {
 	return caseStep{method: method}
 }
 
-func reply(method, path string, status int, contentType, body string) upstreamReply {
+func reply(method, path string, status int, contentType, body string) snapshotReply {
 	header := http.Header{}
 	if contentType != "" {
 		header.Set("Content-Type", contentType)
 	}
-	return upstreamReply{Method: method, Path: path, Status: status, Header: header, Body: body}
+	return snapshotReply{Method: method, Path: path, Status: status, Header: header, Body: body}
 }
 
-func jsonReply(path string, status int, body string) upstreamReply {
+func jsonReply(path string, status int, body string) snapshotReply {
 	return reply(http.MethodPost, path, status, "application/json", body)
 }
 
-func withReplyHeader(r upstreamReply, name, value string) upstreamReply {
+func withReplyHeader(r snapshotReply, name, value string) snapshotReply {
 	r.Header = r.Header.Clone()
 	r.Header.Set(name, value)
 	return r
 }
 
-func sseReply(path string, events ...string) upstreamReply {
+func sseReply(path string, events ...string) snapshotReply {
 	r := reply(http.MethodPost, path, http.StatusOK, "text/event-stream", "")
 	for _, event := range events {
 		r.Chunks = append(r.Chunks, event+"\n\n")
@@ -331,7 +332,7 @@ func sseReply(path string, events ...string) upstreamReply {
 	return r
 }
 
-func getReply(path string, status int, body string) upstreamReply {
+func getReply(path string, status int, body string) snapshotReply {
 	return reply(http.MethodGet, path, status, "application/json", body)
 }
 
@@ -416,35 +417,35 @@ func execCases(k1 caseCredential) []snapshotCase {
 			name:        "exec_chat_completions_nonstream",
 			description: "OpenAI chat completions, buffered: key as bearer, client credentials dropped, session from the first messages, usage passed through",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{withReplyHeader(jsonReply(pathChat, 200, chatBody), "X-Request-Id", "oc-req-chat-1")},
+			script:      []snapshotReply{withReplyHeader(jsonReply(pathChat, 200, chatBody), "X-Request-Id", "oc-req-chat-1")},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecute, execRequest(k1, "openai", chatPayload))},
 		},
 		{
 			name:        "exec_chat_completions_stream",
 			description: "OpenAI chat completions over the host stream bridge: stream_options.include_usage added, keepalive dropped, [DONE] kept",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{withReplyHeader(sseReply(pathChat, chatStreamEvents...), "X-Request-Id", "oc-req-chat-2")},
+			script:      []snapshotReply{withReplyHeader(sseReply(pathChat, chatStreamEvents...), "X-Request-Id", "oc-req-chat-2")},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecuteStream, execRequest(k1, "openai", chatStreamPayload, streaming("stream-chat-1")))},
 		},
 		{
 			name:        "exec_responses_nonstream",
 			description: "OpenAI Responses, buffered, with reasoning effort and usage",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{withReplyHeader(jsonReply(pathResp, 200, respBody), "Request-Id", "oc-req-resp-1")},
+			script:      []snapshotReply{withReplyHeader(jsonReply(pathResp, 200, respBody), "Request-Id", "oc-req-resp-1")},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecute, execRequest(k1, "openai-response", respPayload))},
 		},
 		{
 			name:        "exec_responses_stream",
 			description: "OpenAI Responses over the host stream bridge; prelude events held until the first delta",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{sseReply(pathResp, respStreamEvents...)},
+			script:      []snapshotReply{sseReply(pathResp, respStreamEvents...)},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecuteStream, execRequest(k1, "openai-response", respStreamPayload, streaming("stream-resp-1")))},
 		},
 		{
 			name:        "exec_messages_nonstream",
 			description: "Anthropic Messages, buffered: Anthropic-Version and Anthropic-Beta forwarded, cache and thinking usage",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{withReplyHeader(jsonReply(pathMessages, 200, msgBody), "Request-Id", "oc-req-msg-1")},
+			script:      []snapshotReply{withReplyHeader(jsonReply(pathMessages, 200, msgBody), "Request-Id", "oc-req-msg-1")},
 			steps: []caseStep{execStep(pluginabi.MethodExecutorExecute, execRequest(k1, "claude", msgPayload,
 				withHeader("Anthropic-Version", "2023-06-01"), withHeader("Anthropic-Beta", "interleaved-thinking-2025-05-14"), withHeader("X-Api-Key", "sk-cpa-client-fake")))},
 		},
@@ -452,14 +453,14 @@ func execCases(k1 caseCredential) []snapshotCase {
 			name:        "exec_messages_stream",
 			description: "Anthropic Messages over the host stream bridge; message_start, ping and content_block_start held until the first delta",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{sseReply(pathMessages, msgStreamEvents...)},
+			script:      []snapshotReply{sseReply(pathMessages, msgStreamEvents...)},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecuteStream, execRequest(k1, "claude", msgStreamPayload, streaming("stream-msg-1"), withHeader("Anthropic-Version", "2023-06-01")))},
 		},
 		{
 			name:        "exec_request_rewrites",
 			description: "Model prefix and thinking suffix stripped, credential base_url and prefix, Anthropic headers dropped on OpenAI endpoints, default Anthropic-Version, stream_options kept, buffered stream fallback without a stream_id",
 			credentials: []caseCredential{k1, k2},
-			script: []upstreamReply{
+			script: []snapshotReply{
 				jsonReply(pathChat, 200, chatBody),
 				sseReply("/inference/openai/v1/chat/completions", chatStreamEvents...),
 				jsonReply(pathMessages, 200, msgBody),
@@ -486,28 +487,28 @@ func errorCases(k1 caseCredential) []snapshotCase {
 			name:        "error_400",
 			description: "Upstream 400 with an OpenAI style error body",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{jsonReply(pathChat, 400, `{"error":{"message":"Invalid value for max_tokens","type":"invalid_request_error","code":"invalid_value"}}`)},
+			script:      []snapshotReply{jsonReply(pathChat, 400, `{"error":{"message":"Invalid value for max_tokens","type":"invalid_request_error","code":"invalid_value"}}`)},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecute, chat())},
 		},
 		{
 			name:        "error_401",
 			description: "Upstream 401 with an Anthropic style error body on Messages",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{jsonReply(pathMessages, 401, `{"type":"error","error":{"type":"authentication_error","message":"Invalid API key."}}`)},
+			script:      []snapshotReply{jsonReply(pathMessages, 401, `{"type":"error","error":{"type":"authentication_error","message":"Invalid API key."}}`)},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecute, execRequest(k1, "claude", msgPayload, withHeader("Anthropic-Version", "2023-06-01")))},
 		},
 		{
 			name:        "error_403",
 			description: "Upstream 403 on Responses keeps its status",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{jsonReply(pathResp, 403, `{"error":{"type":"permission_error","message":"Model is blocked by the workspace privacy settings"}}`)},
+			script:      []snapshotReply{jsonReply(pathResp, 403, `{"error":{"type":"permission_error","message":"Model is blocked by the workspace privacy settings"}}`)},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecute, execRequest(k1, "openai-response", respPayload))},
 		},
 		{
 			name:        "error_429_retry_after",
 			description: "Upstream 429 with Retry-After, buffered and on a stream request (failed call before the stream starts)",
 			credentials: []caseCredential{k1},
-			script: []upstreamReply{
+			script: []snapshotReply{
 				withReplyHeader(jsonReply(pathChat, 429, `{"error":{"type":"rate_limit_error","code":"budget_exceeded","message":"Workspace monthly budget exceeded"}}`), "Retry-After", "30"),
 				withReplyHeader(jsonReply(pathChat, 429, `{"error":{"message":"Go usage limit reached"}}`), "Retry-After", "7"),
 			},
@@ -520,28 +521,28 @@ func errorCases(k1 caseCredential) []snapshotCase {
 			name:        "error_500",
 			description: "Upstream 500 is retryable",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{withReplyHeader(jsonReply(pathChat, 500, `{"error":{"message":"internal server error"}}`), "X-Request-Id", "oc-req-500")},
+			script:      []snapshotReply{withReplyHeader(jsonReply(pathChat, 500, `{"error":{"message":"internal server error"}}`), "X-Request-Id", "oc-req-500")},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecute, chat())},
 		},
 		{
 			name:        "error_plain_text_body",
 			description: "Upstream 502 with a plain-text body becomes the message",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{reply(http.MethodPost, pathChat, 502, "text/plain; charset=utf-8", "Bad Gateway: upstream connect error\n")},
+			script:      []snapshotReply{reply(http.MethodPost, pathChat, 502, "text/plain; charset=utf-8", "Bad Gateway: upstream connect error\n")},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecute, chat())},
 		},
 		{
 			name:        "error_string_error_body",
 			description: `Upstream 400 with a plain {"error":"msg"} body`,
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{jsonReply(pathChat, 400, `{"error":"model is required"}`)},
+			script:      []snapshotReply{jsonReply(pathChat, 400, `{"error":"model is required"}`)},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecute, chat())},
 		},
 		{
 			name:        "error_status_mapping",
 			description: "404 becomes 400, 402 is kept, 529 becomes 503, 499 becomes 408",
 			credentials: []caseCredential{k1},
-			script: []upstreamReply{
+			script: []snapshotReply{
 				jsonReply(pathChat, 404, `{"error":{"type":"not_found_error","message":"Model kimi-k9 not found"}}`),
 				jsonReply(pathChat, 402, `{"error":{"code":"insufficient_balance","message":"Workspace is out of credits"}}`),
 				jsonReply(pathChat, 529, `{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}`),
@@ -558,7 +559,7 @@ func errorCases(k1 caseCredential) []snapshotCase {
 			name:        "error_stream_midway",
 			description: "A budget error event after output started reaches the client as is, the stream closes normally and the request log row",
 			credentials: []caseCredential{k1},
-			script: []upstreamReply{sseReply(pathChat,
+			script: []snapshotReply{sseReply(pathChat,
 				chatChunk(`{"role":"assistant","content":"Partial"}`, ""),
 				`data: {"error":{"type":"budget_exceeded","code":"budget_exceeded","message":"Workspace monthly budget exceeded"}}`,
 			)},
@@ -571,7 +572,7 @@ func errorCases(k1 caseCredential) []snapshotCase {
 			name:        "error_stream_before_output",
 			description: "Error events before any output close the stream with a mapped error: rate limit/budget (429 + Retry-After), insufficient quota (402), response.failed usage limit (429), overloaded (529 -> 503)",
 			credentials: []caseCredential{k1},
-			script: []upstreamReply{
+			script: []snapshotReply{
 				withReplyHeader(sseReply(pathMessages, msgStreamEvents[0], msgStreamEvents[1],
 					"event: error\n"+`data: {"type":"error","error":{"type":"rate_limit_error","message":"Go usage limit reached: budget exceeded for the 5-hour window"}}`), "Retry-After", "120"),
 				sseReply(pathChat, chatChunk(`{"role":"assistant"}`, ""), `data: {"error":{"code":"insufficient_quota","message":"Insufficient balance"}}`),
@@ -591,7 +592,7 @@ func errorCases(k1 caseCredential) []snapshotCase {
 			name:        "error_stream_truncated",
 			description: "Streams that end without their terminal event close as stream_truncated",
 			credentials: []caseCredential{k1},
-			script: []upstreamReply{
+			script: []snapshotReply{
 				sseReply(pathResp, respStreamEvents[0], respStreamEvents[1], respStreamEvents[2]),
 				sseReply(pathChat, chatChunk(`{"role":"assistant","content":"Hel"}`, "")),
 			},
@@ -626,7 +627,7 @@ func countTokensCases(k1 caseCredential) []snapshotCase {
 			name:        "count_tokens_ok",
 			description: "count_tokens is forwarded to /anthropic/v1/messages/count_tokens and not written to the request log",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{jsonReply(pathCount, 200, `{"input_tokens":42}`)},
+			script:      []snapshotReply{jsonReply(pathCount, 200, `{"input_tokens":42}`)},
 			steps: []caseStep{
 				execStep(pluginabi.MethodExecutorCountTokens, count()),
 				mgmt(http.MethodGet, mgmtBase+"/logs", ""),
@@ -636,7 +637,7 @@ func countTokensCases(k1 caseCredential) []snapshotCase {
 			name:        "count_tokens_error",
 			description: "count_tokens upstream errors: 400 kept, 404 mapped to 400",
 			credentials: []caseCredential{k1},
-			script: []upstreamReply{
+			script: []snapshotReply{
 				jsonReply(pathCount, 400, `{"type":"error","error":{"type":"invalid_request_error","message":"messages: at least one message is required"}}`),
 				reply(http.MethodPost, pathCount, 404, "text/plain", "404 page not found"),
 			},
@@ -672,7 +673,7 @@ func sessionCases(k1 caseCredential) []snapshotCase {
 			name:        "session_prompt_cache_key",
 			description: "X-Opencode-Session from prompt_cache_key on Responses and chat completions",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{jsonReply(pathResp, 200, respBody), jsonReply(pathChat, 200, chatBody)},
+			script:      []snapshotReply{jsonReply(pathResp, 200, respBody), jsonReply(pathChat, 200, chatBody)},
 			steps: []caseStep{
 				execStep(pluginabi.MethodExecutorExecute, execRequest(k1, "openai-response", `{"model":"kimi-k3","prompt_cache_key":"pck-resp-1","input":"Say hello"}`)),
 				chatWith(`{"model":"kimi-k3","messages":[{"role":"user","content":"Say hello"}],"prompt_cache_key":"pck-chat-2"}`),
@@ -705,14 +706,14 @@ func sessionCases(k1 caseCredential) []snapshotCase {
 			name:        "session_auth_fallback",
 			description: "Without any session source the session is cpa_<auth ID> with spaces replaced",
 			credentials: []caseCredential{spaced},
-			script:      []upstreamReply{jsonReply(pathChat, 200, chatBody)},
+			script:      []snapshotReply{jsonReply(pathChat, 200, chatBody)},
 			steps:       []caseStep{execStep(pluginabi.MethodExecutorExecute, execRequest(spaced, "openai", `{"model":"kimi-k3","prompt":"Say hello"}`))},
 		},
 	}
 }
 
-func repeatReply(r upstreamReply, n int) []upstreamReply {
-	out := make([]upstreamReply, 0, n)
+func repeatReply(r snapshotReply, n int) []snapshotReply {
+	out := make([]snapshotReply, 0, n)
 	for i := 0; i < n; i++ {
 		out = append(out, r)
 	}
@@ -729,7 +730,7 @@ func catalogCases() []snapshotCase {
 			name:        "catalog_models_for_auth",
 			description: "model.static, model.for_auth loading the catalog (with cost) on first use and reusing it, a model selection with a retired model, and the management models view",
 			credentials: []caseCredential{k1, k2},
-			script:      []upstreamReply{catalog},
+			script:      []snapshotReply{catalog},
 			steps: []caseStep{
 				bare(pluginabi.MethodModelStatic),
 				modelsForAuthStep(k1, false),
@@ -741,7 +742,7 @@ func catalogCases() []snapshotCase {
 			name:        "catalog_refresh_on_register",
 			description: "The refresh plugin.register queues re-saves auth files whose model_revision is stale; a forced refresh with the same catalog saves nothing; a new model-prefix re-registers enabled credentials",
 			credentials: []caseCredential{k1, disabled},
-			script:      []upstreamReply{catalog, catalog, catalog},
+			script:      []snapshotReply{catalog, catalog, catalog},
 			steps: []caseStep{
 				lifecycleStep(pluginabi.MethodPluginReconfigure, pluginabi.SchemaVersion, snapshotConfig(nil)),
 				mgmt(http.MethodPost, mgmtBase+"/models/refresh", ""),
@@ -753,7 +754,7 @@ func catalogCases() []snapshotCase {
 			name:        "catalog_fetch_error",
 			description: "Catalog failures: model.for_auth registers nothing for an all-models key, the models view answers 502 and the status shows the error",
 			credentials: []caseCredential{k1},
-			script: []upstreamReply{
+			script: []snapshotReply{
 				reply(http.MethodGet, pathModels, 500, "text/plain", "upstream down"),
 				getReply(pathModels, 200, `{"object":"list","data":[]}`),
 			},
@@ -775,18 +776,18 @@ func credentialCases() []snapshotCase {
 	codex := caseCredential{name: "codex-a.json", index: "idx-3", fields: map[string]any{"type": "codex", "access_token": "fake-access-token"}}
 	status4 := opencodeCred(4, "opencode-k4.json", map[string]any{"label": "No key"})
 	parseRequest := func(name, raw string) caseStep {
-		return caseStep{method: pluginabi.MethodAuthParse, request: pluginapi.AuthParseRequest{Provider: "opencode", Path: fakeAuthDir + "/" + name, FileName: name, RawJSON: []byte(raw), Host: pluginapi.HostConfigSummary{AuthDir: fakeAuthDir}}}
+		return caseStep{method: pluginabi.MethodAuthParse, request: pluginapi.AuthParseRequest{Provider: "opencode", Path: snapshotAuthDir + "/" + name, FileName: name, RawJSON: []byte(raw), Host: pluginapi.HostConfigSummary{AuthDir: snapshotAuthDir}}}
 	}
 	refreshRequest := func(storage string, metadata map[string]any) caseStep {
 		return caseStep{method: pluginabi.MethodAuthRefresh, request: cpaAuthRefreshRequest{AuthRefreshRequest: pluginapi.AuthRefreshRequest{
-			AuthID: "opencode-k1.json", AuthProvider: "opencode", StorageJSON: []byte(storage), Metadata: metadata, Host: pluginapi.HostConfigSummary{AuthDir: fakeAuthDir},
+			AuthID: "opencode-k1.json", AuthProvider: "opencode", StorageJSON: []byte(storage), Metadata: metadata, Host: pluginapi.HostConfigSummary{AuthDir: snapshotAuthDir},
 		}, HostCallbackID: hostCallbackID}}
 	}
 	return []snapshotCase{
 		{
 			name:        "credential_add",
 			description: "Adding keys through the management API: key check against Go usage, catalog load, save through the host, duplicate and invalid input",
-			script:      []upstreamReply{usageOK, catalog},
+			script:      []snapshotReply{usageOK, catalog},
 			steps: []caseStep{
 				mgmt(http.MethodPost, mgmtBase+"/credentials", `{"api_key":"`+fakeKey1+`","label":"Primary","note":"added by snapshot","models":["kimi-k3"," glm-5","kimi-k3","retired-model"],"prefix":"/oc/"}`),
 				mgmt(http.MethodPost, mgmtBase+"/credentials", `{"api_key":"`+fakeKey1+`"}`),
@@ -799,7 +800,7 @@ func credentialCases() []snapshotCase {
 		{
 			name:        "credential_add_key_check",
 			description: "The key check accepts 403 (no Go plan) and rejects 401 (400 to the page) and 500/429 (502)",
-			script: []upstreamReply{
+			script: []snapshotReply{
 				getReply(pathGoUsage, 403, `{"type":"error","error":{"type":"ForbiddenError","message":"Workspace has no Go subscription"}}`),
 				catalog,
 				getReply(pathGoUsage, 401, `{"type":"error","error":{"type":"AuthError","message":"Invalid API key."}}`),
@@ -817,7 +818,7 @@ func credentialCases() []snapshotCase {
 			name:        "credential_update",
 			description: "Editing a credential through the management API (fields, models, prefix, base_url) and the rejected edits",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{catalog},
+			script:      []snapshotReply{catalog},
 			steps: []caseStep{
 				mgmt(http.MethodPatch, mgmtBase+"/credentials", `{"auth_index":"idx-1","label":"Renamed","note":"edited","models":null,"priority":0,"proxy_url":"direct","base_url":"{{UPSTREAM}}/inference/go/openai/v1/"}`),
 				mgmt(http.MethodPatch, mgmtBase+"/credentials", `{"name":"opencode-k1.json","api_key":"oc_sk_new"}`),
@@ -832,7 +833,7 @@ func credentialCases() []snapshotCase {
 			name:        "credential_status_view",
 			description: "Credential views in the status: labels, notes, priority, prefixes, model selection, disabled, redacted proxy, other providers skipped, missing key; missing models once the catalog is loaded",
 			credentials: []caseCredential{status1, status2, codex, status4},
-			script:      []upstreamReply{catalog},
+			script:      []snapshotReply{catalog},
 			steps: []caseStep{
 				mgmt(http.MethodGet, mgmtBase+"/status", ""),
 				modelsForAuthStep(status1, false),
@@ -872,7 +873,7 @@ func quotaCases() []snapshotCase {
 			name:        "quota_fetch_go_usage",
 			description: "quota.fetch reads Go usage from the console origin (5h/7d/monthly, rate-limited window as 0); repeats come from the cache, also when CPA sends only the auth index",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{getReply(pathGoUsage, 200, goUsageBody)},
+			script:      []snapshotReply{getReply(pathGoUsage, 200, goUsageBody)},
 			steps: []caseStep{
 				bare(pluginabi.MethodQuotaDescribe),
 				quotaStep(k1, true),
@@ -884,14 +885,14 @@ func quotaCases() []snapshotCase {
 			name:        "quota_fetch_no_go_plan",
 			description: "A 403 from Go usage means no Go plan: an empty quota, cached",
 			credentials: []caseCredential{k1},
-			script:      []upstreamReply{getReply(pathGoUsage, 403, `{"type":"error","error":{"type":"ForbiddenError","message":"Workspace has no Go subscription"}}`)},
+			script:      []snapshotReply{getReply(pathGoUsage, 403, `{"type":"error","error":{"type":"ForbiddenError","message":"Workspace has no Go subscription"}}`)},
 			steps:       []caseStep{quotaStep(k1, true), quotaStep(k1, true)},
 		},
 		{
 			name:        "quota_fetch_errors",
 			description: "Go usage errors are returned and not cached: 401, 500 plain text, 429 with Retry-After, a non-JSON 200, and a credential without a key",
 			credentials: []caseCredential{k1, k2, k3, noKey},
-			script: []upstreamReply{
+			script: []snapshotReply{
 				getReply(pathGoUsage, 401, `{"type":"error","error":{"type":"AuthError","message":"Invalid API key."}}`),
 				reply(http.MethodGet, pathGoUsage, 500, "text/plain", "boom"),
 				withReplyHeader(getReply(pathGoUsage, 429, `{"error":{"message":"Too many requests"}}`), "Retry-After", "12"),
@@ -909,7 +910,7 @@ func quotaCases() []snapshotCase {
 			name:        "quota_management_view",
 			description: "The management quota view: Go usage, no Go plan, rejected key (400), upstream failure (502), unknown credential (404), cached repeat",
 			credentials: []caseCredential{k1, k2, k3, k4},
-			script: []upstreamReply{
+			script: []snapshotReply{
 				getReply(pathGoUsage, 200, goUsageBody),
 				getReply(pathGoUsage, 403, `{"type":"error","error":{"type":"ForbiddenError","message":"Workspace has no Go subscription"}}`),
 				getReply(pathGoUsage, 401, `{"type":"error","error":{"type":"AuthError","message":"Invalid API key."}}`),
@@ -966,7 +967,7 @@ func managementCases(k1 caseCredential) []snapshotCase {
 			name:        "management_logs",
 			description: "The after-auth interceptor stamps CPA's request ID on OpenCode requests; request log rows of a success, an error and a stream; filters, clearing",
 			credentials: []caseCredential{k1},
-			script: []upstreamReply{
+			script: []snapshotReply{
 				withReplyHeader(jsonReply(pathChat, 200, chatBody), "X-Request-Id", "oc-req-log-1"),
 				jsonReply(pathChat, 500, `{"error":{"message":"internal server error"}}`),
 				sseReply(pathMessages, msgStreamEvents...),
@@ -1015,7 +1016,7 @@ func lifecycleCases() []snapshotCase {
 		{
 			name:        "lifecycle_register_and_identifiers",
 			description: "plugin.register (schema 10 and a host without a schema), config warnings, identifiers, unsupported operations, unknown methods, shutdown",
-			script:      []upstreamReply{catalog, reply(http.MethodGet, pathModels, 503, "text/plain", "maintenance")},
+			script:      []snapshotReply{catalog, reply(http.MethodGet, pathModels, 503, "text/plain", "maintenance")},
 			steps: []caseStep{
 				lifecycleStep(pluginabi.MethodPluginRegister, pluginabi.SchemaVersion, snapshotConfig(nil)),
 				lifecycleStep(pluginabi.MethodPluginReconfigure, 0, snapshotConfig(map[string]any{"model-prefix": "/oc/", "request-timeout-seconds": -5, "stream-idle-timeout-seconds": 0, "models-refresh-minutes": -1, "log-retention": -1})),
@@ -1030,4 +1031,9 @@ func lifecycleCases() []snapshotCase {
 			},
 		},
 	}
+}
+
+// snapshotYAML renders a plugin config object as the YAML CPA passes.
+func snapshotYAML(config map[string]any) ([]byte, error) {
+	return yaml.Marshal(config)
 }
