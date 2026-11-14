@@ -1,6 +1,6 @@
-// Package opencode holds what the plugin knows about the OpenCode Console API
-// itself: endpoints, error mapping, egress (proxies and HTTP clients) and the
-// Go usage it reports.
+// Package opencode is the OpenCode adapter for cpa-provider-core: what the
+// plugin knows about the OpenCode Console API itself (endpoints, the model
+// catalog, session routing and the Go usage it reports).
 package opencode
 
 import (
@@ -38,18 +38,4 @@ func GoUsageURL(baseURL string) string {
 		return strings.TrimRight(baseURL, "/") + EndpointGoUsage
 	}
 	return parsed.Scheme + "://" + parsed.Host + EndpointGoUsage
-}
-
-// EndpointForFormat maps a CPA executor format to the OpenCode endpoint.
-func EndpointForFormat(format string) (string, bool) {
-	switch strings.ToLower(strings.TrimSpace(format)) {
-	case "openai", "chat-completions", "chat_completions", "openai-chat-completions":
-		return EndpointChat, true
-	case "openai-response", "openai-responses", "responses":
-		return EndpointResponses, true
-	case "claude", "anthropic":
-		return EndpointMessages, true
-	default:
-		return "", false
-	}
 }

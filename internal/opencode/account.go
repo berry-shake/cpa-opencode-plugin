@@ -1,18 +1,14 @@
 package opencode
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
-	"io"
 	"math"
-	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/berry-shake/cpa-opencode-plugin/internal/jsonfield"
-	"github.com/router-for-me/CLIProxyAPI/v8/sdk/pluginabi"
+	"github.com/berry-shake/cpa-provider-core/jsonfield"
+	"github.com/berry-shake/cpa-provider-core/upstream"
 	"github.com/router-for-me/CLIProxyAPI/v8/sdk/pluginapi"
 )
 
@@ -58,35 +54,6 @@ func (w GoWindow) Left() float64 {
 	return math.Max(0, math.Min(1, 1-w.Percent/100))
 }
 
-// GetJSON GETs a JSON object from OpenCode with a bearer token. name labels
-// the endpoint in errors.
-func GetJSON(ctx context.Context, client *http.Client, target, token, userAgent, name string) (map[string]any, *pluginabi.Error) {
-	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
-	if errReq != nil {
-		return nil, TransportError(errReq)
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", userAgent)
-	resp, errDo := client.Do(req)
-	if errDo != nil {
-		return nil, TransportError(errDo)
-	}
-	defer func() { _ = resp.Body.Close() }()
-	body, errRead := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
-	if errRead != nil {
-		return nil, TransportError(errRead)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, UpstreamError(resp.StatusCode, resp.Header, body, name)
-	}
-	var out map[string]any
-	if errUnmarshal := json.Unmarshal(body, &out); errUnmarshal != nil {
-		return nil, &pluginabi.Error{Code: "invalid_upstream_response", Message: "opencode: decode " + name + ": " + errUnmarshal.Error(), HTTPStatus: http.StatusBadGateway}
-	}
-	return out, nil
-}
-
 // GoUsageFrom reads a GET /zen/go/v1/usage response:
 // {"usage":{"rolling":{"status":"ok"|"rate-limited","percent","resetsAt"},"weekly":{...},"monthly":{...}}}.
 // It returns nil when the response has no usage.
@@ -111,7 +78,7 @@ func goWindowFrom(raw any) *GoWindow {
 	if !ok {
 		return nil
 	}
-	percent, _ := optionalNumber(fields["percent"])
+	percent, _ := upstream.OptionalNumber(fields["percent"])
 	return &GoWindow{
 		Percent:  math.Max(0, math.Min(100, percent)),
 		Limited:  strings.EqualFold(jsonfield.String(fields, "status"), "rate-limited"),
@@ -167,33 +134,4 @@ func QuotaFromAccount(info AccountInfo) pluginapi.QuotaFetchResponse {
 		out.Groups = append(out.Groups, pluginapi.QuotaGroup{DisplayName: "OpenCode Go", Buckets: buckets})
 	}
 	return out
-}
-
-// optionalNumber accepts JSON numbers and decimal strings; null is absent.
-func optionalNumber(raw any) (float64, bool) {
-	var parsed float64
-	switch value := raw.(type) {
-	case float64:
-		parsed = value
-	case string:
-		number, errParse := strconv.ParseFloat(strings.TrimSpace(value), 64)
-		if errParse != nil {
-			return 0, false
-		}
-		parsed = number
-	case json.Number:
-		number, errParse := value.Float64()
-		if errParse != nil {
-			return 0, false
-		}
-		parsed = number
-	default:
-		return 0, false
-	}
-	// ParseFloat reads "NaN" and "Infinity"; they are no amount, and JSON
-	// cannot carry them to the page or CPA's quota panel.
-	if math.IsNaN(parsed) || math.IsInf(parsed, 0) {
-		return 0, false
-	}
-	return parsed, true
 }
