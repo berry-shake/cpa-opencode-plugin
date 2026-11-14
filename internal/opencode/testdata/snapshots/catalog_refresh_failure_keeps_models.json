@@ -1,0 +1,490 @@
+{
+  "case": "catalog_refresh_failure_keeps_models",
+  "description": "A failed catalog refresh keeps the last good catalog: an all-models key still registers its models and the status shows the error",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "GET",
+      "path": "/inference/go/v1/models",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"object\":\"list\",\"data\":[{\"id\":\"kimi-k3\",\"object\":\"model\",\"created\":1767225600,\"name\":\"Kimi K3\",\"type\":\"chat\",\"description\":\"Moonshot Kimi K3\",\"family\":\"kimi\",\"open_weights\":true,\"release_date\":\"2026-01-01\",\"modalities\":{\"input\":[\"text\",\"image/png\",\"application/pdf\"],\"output\":[\"text\"]},\"capabilities\":{\"tools\":{\"supported\":true},\"reasoning\":{\"supported\":true,\"effort\":[\"none\",\"low\",\"high\"]}},\"limit\":{\"context\":262144,\"output\":32768},\"cost\":{\"text\":{\"input\":{\"price\":0.6,\"cache\":{\"read\":0.15,\"write\":{\"30m\":0.75,\"12h\":1.2}},\"overrides\":[{\"when\":{\"context\":{\"gt\":128000}},\"price\":1.2}]},\"output\":{\"price\":2.5,\"overrides\":[{\"when\":{\"context\":{\"gt\":128000}},\"price\":5}]}},\"multipliers\":[{\"when\":{\"hours\":\"peak\"},\"factor\":1.5}]},\"api\":{\"messages\":{},\"chat-completions\":{}}},{\"id\":\"glm-5\",\"object\":\"model\",\"created\":1767312000,\"name\":\"GLM 5\",\"type\":\"chat\",\"family\":\"glm\",\"modalities\":{\"input\":[\"text\"]},\"capabilities\":{\"tools\":{\"supported\":true},\"reasoning\":{\"supported\":false}},\"limit\":{\"context\":200000,\"output\":16384},\"cost\":{\"text\":{\"input\":{\"price\":0},\"output\":{\"price\":0}}},\"api\":{\"chat-completions\":{}}},{\"id\":\"text-embed-1\",\"object\":\"model\",\"created\":1767398400,\"name\":\"Text Embed 1\",\"type\":\"embedding\",\"modalities\":{\"input\":[\"text\"]},\"limit\":{\"context\":8192,\"output\":0}},{\"id\":\"kimi-k3\",\"object\":\"model\",\"created\":1,\"name\":\"Duplicate entry\"}]}",
+      "chunks": []
+    },
+    {
+      "method": "GET",
+      "path": "/inference/go/v1/models",
+      "status": 500,
+      "header": {
+        "Content-Type": [
+          "text/plain"
+        ]
+      },
+      "body": "upstream down",
+      "chunks": []
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "model.for_auth",
+        "request": {
+          "Plugin": {
+            "Name": "",
+            "Version": "",
+            "Author": "",
+            "GitHubRepository": "",
+            "Logo": "",
+            "ConfigFields": null
+          },
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "Metadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "Attributes": null,
+          "Host": {
+            "AuthDir": "/auths",
+            "ProxyURL": "",
+            "ForceModelPrefix": false,
+            "OAuthModelAlias": null,
+            "ExcludedModels": null
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "GET",
+            "path": "/inference/go/v1/models",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ]
+            },
+            "body": ""
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "Provider": "opencode",
+            "Models": [
+              {
+                "ID": "glm-5",
+                "Object": "model",
+                "Created": 1767312000,
+                "OwnedBy": "opencode",
+                "Type": "opencode",
+                "DisplayName": "GLM 5",
+                "Name": "glm-5",
+                "Version": "",
+                "Description": "OpenCode · glm-5",
+                "InputTokenLimit": 200000,
+                "OutputTokenLimit": 16384,
+                "SupportedGenerationMethods": null,
+                "ContextLength": 200000,
+                "MaxCompletionTokens": 16384,
+                "SupportedParameters": [
+                  "tools"
+                ],
+                "SupportedInputModalities": [
+                  "text"
+                ],
+                "SupportedOutputModalities": [
+                  "text"
+                ],
+                "Thinking": null,
+                "UserDefined": true
+              },
+              {
+                "ID": "kimi-k3",
+                "Object": "model",
+                "Created": 1767225600,
+                "OwnedBy": "opencode",
+                "Type": "opencode",
+                "DisplayName": "Kimi K3",
+                "Name": "kimi-k3",
+                "Version": "",
+                "Description": "Moonshot Kimi K3",
+                "InputTokenLimit": 262144,
+                "OutputTokenLimit": 32768,
+                "SupportedGenerationMethods": null,
+                "ContextLength": 262144,
+                "MaxCompletionTokens": 32768,
+                "SupportedParameters": [
+                  "tools",
+                  "reasoning"
+                ],
+                "SupportedInputModalities": [
+                  "text",
+                  "image",
+                  "pdf"
+                ],
+                "SupportedOutputModalities": [
+                  "text"
+                ],
+                "Thinking": {
+                  "Min": 0,
+                  "Max": 0,
+                  "ZeroAllowed": true,
+                  "DynamicAllowed": false,
+                  "DisableType": "",
+                  "Levels": [
+                    "none",
+                    "low",
+                    "high"
+                  ]
+                },
+                "UserDefined": true
+              }
+            ],
+            "AuthUpdate": {
+              "Provider": "",
+              "ID": "",
+              "FileName": "",
+              "Label": "",
+              "Prefix": "",
+              "ProxyURL": "",
+              "Disabled": false,
+              "StorageJSON": null,
+              "Metadata": null,
+              "Attributes": null,
+              "NextRefreshAfter": "0001-01-01T00:00:00Z"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "POST",
+          "Path": "/v0/management/plugins/opencode/models/refresh",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "GET",
+            "path": "/inference/go/v1/models",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ]
+            },
+            "body": ""
+          }
+        ],
+        "host_calls": [
+          {
+            "method": "host.auth.list",
+            "request": {}
+          },
+          {
+            "method": "host.auth.get",
+            "request": {
+              "auth_index": "idx-1"
+            }
+          },
+          {
+            "method": "host.log",
+            "request": {
+              "level": "warn",
+              "message": "opencode: model catalog refresh failed",
+              "fields": {
+                "error": "GET /v1/models returned 500: upstream down"
+              }
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 502,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "error": "catalog_unavailable",
+              "message": "GET /v1/models returned 500: upstream down"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "model.for_auth",
+        "request": {
+          "Plugin": {
+            "Name": "",
+            "Version": "",
+            "Author": "",
+            "GitHubRepository": "",
+            "Logo": "",
+            "ConfigFields": null
+          },
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "Metadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "Attributes": null,
+          "Host": {
+            "AuthDir": "/auths",
+            "ProxyURL": "",
+            "ForceModelPrefix": false,
+            "OAuthModelAlias": null,
+            "ExcludedModels": null
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "Provider": "opencode",
+            "Models": [
+              {
+                "ID": "glm-5",
+                "Object": "model",
+                "Created": 1767312000,
+                "OwnedBy": "opencode",
+                "Type": "opencode",
+                "DisplayName": "GLM 5",
+                "Name": "glm-5",
+                "Version": "",
+                "Description": "OpenCode · glm-5",
+                "InputTokenLimit": 200000,
+                "OutputTokenLimit": 16384,
+                "SupportedGenerationMethods": null,
+                "ContextLength": 200000,
+                "MaxCompletionTokens": 16384,
+                "SupportedParameters": [
+                  "tools"
+                ],
+                "SupportedInputModalities": [
+                  "text"
+                ],
+                "SupportedOutputModalities": [
+                  "text"
+                ],
+                "Thinking": null,
+                "UserDefined": true
+              },
+              {
+                "ID": "kimi-k3",
+                "Object": "model",
+                "Created": 1767225600,
+                "OwnedBy": "opencode",
+                "Type": "opencode",
+                "DisplayName": "Kimi K3",
+                "Name": "kimi-k3",
+                "Version": "",
+                "Description": "Moonshot Kimi K3",
+                "InputTokenLimit": 262144,
+                "OutputTokenLimit": 32768,
+                "SupportedGenerationMethods": null,
+                "ContextLength": 262144,
+                "MaxCompletionTokens": 32768,
+                "SupportedParameters": [
+                  "tools",
+                  "reasoning"
+                ],
+                "SupportedInputModalities": [
+                  "text",
+                  "image",
+                  "pdf"
+                ],
+                "SupportedOutputModalities": [
+                  "text"
+                ],
+                "Thinking": {
+                  "Min": 0,
+                  "Max": 0,
+                  "ZeroAllowed": true,
+                  "DynamicAllowed": false,
+                  "DisableType": "",
+                  "Levels": [
+                    "none",
+                    "low",
+                    "high"
+                  ]
+                },
+                "UserDefined": true
+              }
+            ],
+            "AuthUpdate": {
+              "Provider": "",
+              "ID": "",
+              "FileName": "",
+              "Label": "",
+              "Prefix": "",
+              "ProxyURL": "",
+              "Disabled": false,
+              "StorageJSON": null,
+              "Metadata": null,
+              "Attributes": null,
+              "NextRefreshAfter": "0001-01-01T00:00:00Z"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/management/plugins/opencode/status",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [
+          {
+            "method": "host.auth.list",
+            "request": {}
+          },
+          {
+            "method": "host.auth.get",
+            "request": {
+              "auth_index": "idx-1"
+            }
+          },
+          {
+            "method": "host.auth.models",
+            "request": {}
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "plugin": "opencode",
+              "version": "9.9.9-snapshot",
+              "now": "2026-01-02T03:04:05Z",
+              "config": {
+                "base_url": "{{UPSTREAM}}/inference/go",
+                "default_prefix": "opencode",
+                "force_model_prefix": false,
+                "models_refresh_minutes": 60,
+                "request_timeout_seconds": 600,
+                "stream_idle_timeout_seconds": 300
+              },
+              "catalog": {
+                "count": 3,
+                "revision": "9ddee370bd171071",
+                "fetched_at": "2026-01-02T03:04:05Z",
+                "checked_at": "2026-01-02T03:04:05Z",
+                "last_error": "GET /v1/models returned 500: upstream down"
+              },
+              "credentials": [
+                {
+                  "auth_index": "idx-1",
+                  "id": "opencode-k1.json",
+                  "name": "opencode-k1.json",
+                  "label": "",
+                  "key_masked": "oc_sk_…0001",
+                  "disabled": false,
+                  "unavailable": false,
+                  "priority": 0,
+                  "prefix": null,
+                  "effective_prefix": "opencode",
+                  "all_models": true,
+                  "models": [],
+                  "registered_models": 0,
+                  "registered_known": true,
+                  "success": 0,
+                  "failed": 0
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}
