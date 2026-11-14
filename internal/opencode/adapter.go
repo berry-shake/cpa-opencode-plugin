@@ -27,6 +27,7 @@ func New() *Adapter {
 var (
 	_ provider.Adapter         = (*Adapter)(nil)
 	_ provider.HeaderDecorator = (*Adapter)(nil)
+	_ provider.RequestReader   = (*Adapter)(nil)
 	_ provider.TokenCounter    = (*Adapter)(nil)
 )
 
@@ -59,7 +60,6 @@ func (a *Adapter) Spec() provider.Spec {
 			EditCredentialRoute: `Edit an OpenCode credential. Body: {"auth_index","label","note","models","prefix","proxy_url"|"proxy_id","priority"}.`,
 			QuotaRoute:          "Go allowance (5-hour, weekly and monthly usage) of the OpenCode workspace behind one credential (?auth_index=).",
 		},
-		RequestMembers: sessionMembers,
 	}
 }
 
@@ -78,6 +78,11 @@ func (a *Adapter) Endpoint(protocol provider.Protocol) string {
 // Catalog is OpenCode's model list.
 func (a *Adapter) Catalog() provider.CatalogSource {
 	return a.catalog
+}
+
+// RequestMembers names the request members Decorate derives a session from.
+func (a *Adapter) RequestMembers() []string {
+	return sessionMembers
 }
 
 // Decorate sets the session header OpenCode routes a conversation by (see
