@@ -59,7 +59,6 @@ func (a *Adapter) Spec() provider.Spec {
 			EditCredentialRoute: `Edit an OpenCode credential. Body: {"auth_index","label","note","models","prefix","proxy_url"|"proxy_id","priority"}.`,
 			QuotaRoute:          "Go allowance (5-hour, weekly and monthly usage) of the OpenCode workspace behind one credential (?auth_index=).",
 		},
-		StreamErrors:   provider.StreamErrorsExtended,
 		RequestMembers: sessionMembers,
 	}
 }
