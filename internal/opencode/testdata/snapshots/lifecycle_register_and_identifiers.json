@@ -421,11 +421,10 @@
         "upstream_requests": [],
         "host_calls": [],
         "response": {
-          "ok": false,
-          "error": {
-            "code": "unsupported_operation",
-            "message": "opencode: quota reset is not supported",
-            "http_status": 501
+          "ok": true,
+          "result": {
+            "success": false,
+            "message": "opencode: quota reset is not supported"
           }
         }
       }
