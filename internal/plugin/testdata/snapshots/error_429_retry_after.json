@@ -1,0 +1,279 @@
+{
+  "case": "error_429_retry_after",
+  "description": "Upstream 429 with Retry-After, buffered and on a stream request (failed call before the stream starts)",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "POST",
+      "path": "/inference/go/openai/v1/chat/completions",
+      "status": 429,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ],
+        "Retry-After": [
+          "30"
+        ]
+      },
+      "body": "{\"error\":{\"type\":\"rate_limit_error\",\"code\":\"budget_exceeded\",\"message\":\"Workspace monthly budget exceeded\"}}",
+      "chunks": []
+    },
+    {
+      "method": "POST",
+      "path": "/inference/go/openai/v1/chat/completions",
+      "status": 429,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ],
+        "Retry-After": [
+          "7"
+        ]
+      },
+      "body": "{\"error\":{\"message\":\"Go usage limit reached\"}}",
+      "chunks": []
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "executor.execute",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "temperature": 0.2
+          },
+          "SourceFormat": "openai",
+          "Payload": {
+            "model": "kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "temperature": 0.2
+          },
+          "Metadata": {
+            "request_path": "/v1/chat/completions",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/openai/v1/chat/completions",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "104"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_39944b1fefeacc3f4a901109ea4554a3"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"max_tokens\":64,\"temperature\":0.2}"
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "budget_exceeded",
+            "message": "opencode: Workspace monthly budget exceeded",
+            "retryable": true,
+            "http_status": 429,
+            "retry_after_seconds": 30
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.execute_stream",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai",
+          "Stream": true,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "text/event-stream"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "SourceFormat": "openai",
+          "Payload": {
+            "model": "kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "Metadata": {
+            "request_path": "/v1/chat/completions",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "stream_id": "stream-429-1",
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/openai/v1/chat/completions",
+            "query": "",
+            "header": {
+              "Accept": [
+                "text/event-stream"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "140"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_39944b1fefeacc3f4a901109ea4554a3"
+              ]
+            },
+            "body": "{\"stream_options\":{\"include_usage\":true},\"model\":\"kimi-k3\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"max_tokens\":64,\"stream\":true}"
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "upstream_429",
+            "message": "opencode: Go usage limit reached",
+            "retryable": true,
+            "http_status": 429,
+            "retry_after_seconds": 7
+          }
+        }
+      }
+    }
+  ]
+}

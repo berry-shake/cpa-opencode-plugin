@@ -1,0 +1,213 @@
+{
+  "case": "exec_chat_completions_stream",
+  "description": "OpenAI chat completions over the host stream bridge: stream_options.include_usage added, keepalive dropped, [DONE] kept",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "POST",
+      "path": "/inference/go/openai/v1/chat/completions",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "text/event-stream"
+        ],
+        "X-Request-Id": [
+          "oc-req-chat-2"
+        ]
+      },
+      "body": "",
+      "chunks": [
+        ": OPENCODE PROCESSING\n\n",
+        "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"}}]}\n\n",
+        "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"}}]}\n\n",
+        "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" there!\"}}]}\n\n",
+        "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
+        "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[],\"usage\":{\"prompt_tokens\":11,\"completion_tokens\":4,\"total_tokens\":15}}\n\n",
+        "data: [DONE]\n\n"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "executor.execute_stream",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai",
+          "Stream": true,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "text/event-stream"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "SourceFormat": "openai",
+          "Payload": {
+            "model": "kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "Metadata": {
+            "request_path": "/v1/chat/completions",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "stream_id": "stream-chat-1",
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/openai/v1/chat/completions",
+            "query": "",
+            "header": {
+              "Accept": [
+                "text/event-stream"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "140"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_39944b1fefeacc3f4a901109ea4554a3"
+              ]
+            },
+            "body": "{\"stream_options\":{\"include_usage\":true},\"model\":\"kimi-k3\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"max_tokens\":64,\"stream\":true}"
+          }
+        ],
+        "host_calls": [
+          {
+            "method": "host.stream.emit",
+            "request": {
+              "stream_id": "stream-chat-1",
+              "payload": "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"}}]}\n\n"
+            }
+          },
+          {
+            "method": "host.stream.emit",
+            "request": {
+              "stream_id": "stream-chat-1",
+              "payload": "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"}}]}\n\n"
+            }
+          },
+          {
+            "method": "host.stream.emit",
+            "request": {
+              "stream_id": "stream-chat-1",
+              "payload": "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" there!\"}}]}\n\n"
+            }
+          },
+          {
+            "method": "host.stream.emit",
+            "request": {
+              "stream_id": "stream-chat-1",
+              "payload": "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n"
+            }
+          },
+          {
+            "method": "host.stream.emit",
+            "request": {
+              "stream_id": "stream-chat-1",
+              "payload": "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[],\"usage\":{\"prompt_tokens\":11,\"completion_tokens\":4,\"total_tokens\":15}}\n\n"
+            }
+          },
+          {
+            "method": "host.stream.emit",
+            "request": {
+              "stream_id": "stream-chat-1",
+              "payload": "data: [DONE]\n\n"
+            }
+          },
+          {
+            "method": "host.stream.close",
+            "request": {
+              "stream_id": "stream-chat-1"
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "headers": {
+              "Content-Type": [
+                "text/event-stream"
+              ],
+              "X-Request-Id": [
+                "oc-req-chat-2"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

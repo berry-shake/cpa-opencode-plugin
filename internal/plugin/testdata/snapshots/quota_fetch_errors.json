@@ -1,0 +1,373 @@
+{
+  "case": "quota_fetch_errors",
+  "description": "Go usage errors are returned and not cached: 401, 500 plain text, 429 with Retry-After, a non-JSON 200, and a credential without a key",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      },
+      {
+        "name": "opencode-k2.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0002",
+          "type": "opencode"
+        }
+      },
+      {
+        "name": "opencode-k3.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0003",
+          "type": "opencode"
+        }
+      },
+      {
+        "name": "opencode-nokey.json",
+        "fields": {
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "GET",
+      "path": "/zen/go/v1/usage",
+      "status": 401,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"type\":\"error\",\"error\":{\"type\":\"AuthError\",\"message\":\"Invalid API key.\"}}",
+      "chunks": []
+    },
+    {
+      "method": "GET",
+      "path": "/zen/go/v1/usage",
+      "status": 500,
+      "header": {
+        "Content-Type": [
+          "text/plain"
+        ]
+      },
+      "body": "boom",
+      "chunks": []
+    },
+    {
+      "method": "GET",
+      "path": "/zen/go/v1/usage",
+      "status": 429,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ],
+        "Retry-After": [
+          "12"
+        ]
+      },
+      "body": "{\"error\":{\"message\":\"Too many requests\"}}",
+      "chunks": []
+    },
+    {
+      "method": "GET",
+      "path": "/zen/go/v1/usage",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "text/html"
+        ]
+      },
+      "body": "<html>maintenance</html>",
+      "chunks": []
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "quota.fetch",
+        "request": {
+          "auth_index": "idx-1",
+          "auth_id": "opencode-k1.json",
+          "provider": "opencode",
+          "storage_json": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "metadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "host": {
+            "AuthDir": "",
+            "ProxyURL": "",
+            "ForceModelPrefix": false,
+            "OAuthModelAlias": null,
+            "ExcludedModels": null
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "GET",
+            "path": "/zen/go/v1/usage",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ]
+            },
+            "body": ""
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "AuthError",
+            "message": "opencode: Invalid API key.",
+            "http_status": 401
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "quota.fetch",
+        "request": {
+          "auth_index": "idx-2",
+          "auth_id": "opencode-k2.json",
+          "provider": "opencode",
+          "storage_json": {
+            "api_key": "oc_sk_test_fake_key_0002",
+            "type": "opencode"
+          },
+          "metadata": {
+            "api_key": "oc_sk_test_fake_key_0002",
+            "type": "opencode"
+          },
+          "host": {
+            "AuthDir": "",
+            "ProxyURL": "",
+            "ForceModelPrefix": false,
+            "OAuthModelAlias": null,
+            "ExcludedModels": null
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "GET",
+            "path": "/zen/go/v1/usage",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0002"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ]
+            },
+            "body": ""
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "upstream_500",
+            "message": "opencode: boom",
+            "retryable": true,
+            "http_status": 500
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "quota.fetch",
+        "request": {
+          "auth_index": "idx-3",
+          "auth_id": "opencode-k3.json",
+          "provider": "opencode",
+          "storage_json": {
+            "api_key": "oc_sk_test_fake_key_0003",
+            "type": "opencode"
+          },
+          "metadata": {
+            "api_key": "oc_sk_test_fake_key_0003",
+            "type": "opencode"
+          },
+          "host": {
+            "AuthDir": "",
+            "ProxyURL": "",
+            "ForceModelPrefix": false,
+            "OAuthModelAlias": null,
+            "ExcludedModels": null
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "GET",
+            "path": "/zen/go/v1/usage",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0003"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ]
+            },
+            "body": ""
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "upstream_429",
+            "message": "opencode: Too many requests",
+            "retryable": true,
+            "http_status": 429,
+            "retry_after_seconds": 12
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "quota.fetch",
+        "request": {
+          "auth_index": "idx-1",
+          "auth_id": "opencode-k1.json",
+          "provider": "opencode",
+          "storage_json": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "metadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "host": {
+            "AuthDir": "",
+            "ProxyURL": "",
+            "ForceModelPrefix": false,
+            "OAuthModelAlias": null,
+            "ExcludedModels": null
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "GET",
+            "path": "/zen/go/v1/usage",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ]
+            },
+            "body": ""
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "invalid_upstream_response",
+            "message": "opencode: decode /zen/go/v1/usage: invalid character '<' looking for beginning of value",
+            "http_status": 502
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "quota.fetch",
+        "request": {
+          "auth_index": "idx-4",
+          "auth_id": "opencode-nokey.json",
+          "provider": "opencode",
+          "host": {
+            "AuthDir": "",
+            "ProxyURL": "",
+            "ForceModelPrefix": false,
+            "OAuthModelAlias": null,
+            "ExcludedModels": null
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [
+          {
+            "method": "host.auth.get",
+            "request": {
+              "auth_index": "idx-4"
+            }
+          }
+        ],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "invalid_credential",
+            "message": "opencode: credential has no api_key",
+            "http_status": 401
+          }
+        }
+      }
+    }
+  ]
+}

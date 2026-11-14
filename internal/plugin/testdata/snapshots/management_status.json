@@ -1,0 +1,458 @@
+{
+  "case": "management_status",
+  "description": "Management routes, the status view, logo and flag resources, unknown routes and methods, the before-auth interceptor",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [],
+  "steps": [
+    {
+      "rpc": {
+        "method": "management.register",
+        "request": null
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "routes": [
+              {
+                "method": "GET",
+                "path": "/v0/management/plugins/opencode/status",
+                "description": "Plugin status, model catalog summary and OpenCode credentials."
+              },
+              {
+                "method": "GET",
+                "path": "/v0/management/plugins/opencode/models",
+                "description": "OpenCode model list with inputs, tools, reasoning efforts, context length and prices."
+              },
+              {
+                "method": "POST",
+                "path": "/v0/management/plugins/opencode/models/refresh",
+                "description": "Reload the OpenCode model catalog and re-register changed models."
+              },
+              {
+                "method": "POST",
+                "path": "/v0/management/plugins/opencode/credentials",
+                "description": "Add an OpenCode API key. Body: {\"api_key\",\"label\",\"note\",\"models\",\"prefix\",\"proxy_url\"|\"proxy_id\"}."
+              },
+              {
+                "method": "PATCH",
+                "path": "/v0/management/plugins/opencode/credentials",
+                "description": "Edit an OpenCode credential. Body: {\"auth_index\",\"label\",\"note\",\"models\",\"prefix\",\"proxy_url\"|\"proxy_id\",\"priority\"}."
+              },
+              {
+                "method": "GET",
+                "path": "/v0/management/plugins/opencode/credentials/quota",
+                "description": "Go allowance (5-hour, weekly and monthly usage) of the OpenCode workspace behind one credential (?auth_index=)."
+              },
+              {
+                "method": "GET",
+                "path": "/v0/management/plugins/opencode/logs",
+                "description": "Request log, newest first (?search=&status=all|success|error&from=&to=&request_id=&limit=&offset=), with a summary."
+              },
+              {
+                "method": "DELETE",
+                "path": "/v0/management/plugins/opencode/logs",
+                "description": "Clear the request log."
+              },
+              {
+                "method": "GET",
+                "path": "/v0/management/plugins/opencode/proxies",
+                "description": "Proxy list (URLs redacted) and CPA's global proxy."
+              },
+              {
+                "method": "POST",
+                "path": "/v0/management/plugins/opencode/proxies",
+                "description": "Add a proxy. Body: {\"name\",\"url\"}."
+              },
+              {
+                "method": "PATCH",
+                "path": "/v0/management/plugins/opencode/proxies",
+                "description": "Rename a proxy or change its URL. Body: {\"id\",\"name\",\"url\"}. Credentials using the old URL move to the new one."
+              },
+              {
+                "method": "DELETE",
+                "path": "/v0/management/plugins/opencode/proxies",
+                "description": "Remove a proxy (?id=). Credentials using it keep its URL."
+              },
+              {
+                "method": "POST",
+                "path": "/v0/management/plugins/opencode/proxies/import",
+                "description": "Add the proxies OpenCode credentials already use to the list."
+              },
+              {
+                "method": "POST",
+                "path": "/v0/management/plugins/opencode/proxies/order",
+                "description": "Reorder the proxy list. Body: {\"ids\":[...]}."
+              },
+              {
+                "method": "POST",
+                "path": "/v0/management/plugins/opencode/proxies/check",
+                "description": "Look up the exit IP and latency of a proxy. Body: {\"id\"} or {\"target\":\"direct\"|\"inherit\"}."
+              }
+            ],
+            "resources": [
+              {
+                "path": "/manage",
+                "menu": "OpenCode",
+                "description": "Manage OpenCode API keys, model selection and egress proxies."
+              },
+              {
+                "path": "/logo.svg",
+                "description": "Plugin logo served to the management panel sidebar."
+              },
+              {
+                "path": "/flag.svg",
+                "description": "Country flag icon for egress checks (?cc=<ISO 3166-1 alpha-2>)."
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/management/plugins/opencode/status",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [
+          {
+            "method": "host.auth.list",
+            "request": {}
+          },
+          {
+            "method": "host.auth.get",
+            "request": {
+              "auth_index": "idx-1"
+            }
+          },
+          {
+            "method": "host.auth.models",
+            "request": {}
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "plugin": "opencode",
+              "version": "9.9.9-snapshot",
+              "now": "2026-01-02T03:04:05Z",
+              "config": {
+                "base_url": "{{UPSTREAM}}/inference/go",
+                "default_prefix": "opencode",
+                "models_refresh_minutes": 60,
+                "request_timeout_seconds": 600,
+                "stream_idle_timeout_seconds": 300
+              },
+              "catalog": {
+                "count": 0
+              },
+              "credentials": [
+                {
+                  "auth_index": "idx-1",
+                  "id": "opencode-k1.json",
+                  "name": "opencode-k1.json",
+                  "label": "",
+                  "key_masked": "oc_sk_…0001",
+                  "disabled": false,
+                  "unavailable": false,
+                  "priority": 0,
+                  "prefix": null,
+                  "effective_prefix": "opencode",
+                  "all_models": true,
+                  "models": [],
+                  "registered_models": 0,
+                  "registered_known": true,
+                  "success": 0,
+                  "failed": 0
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/resource/plugins/opencode/logo.svg",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "public, max-age=86400"
+              ],
+              "Content-Security-Policy": [
+                "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+              ],
+              "Content-Type": [
+                "image/svg+xml"
+              ],
+              "X-Content-Type-Options": [
+                "nosniff"
+              ]
+            },
+            "Body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\">\n  <rect width=\"256\" height=\"256\" rx=\"70\" fill=\"#131010\"/>\n  <path d=\"M160 112V176H96V112H160Z\" fill=\"#5A5858\"/>\n  <path fill-rule=\"evenodd\" d=\"M192 208H64V48H192V208ZM160 80H96V176H160V80Z\" fill=\"#FFFFFF\"/>\n</svg>\n"
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/resource/plugins/opencode/flag.svg",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": {
+            "cc": [
+              "jp"
+            ]
+          },
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "public, max-age=604800"
+              ],
+              "Content-Security-Policy": [
+                "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+              ],
+              "Content-Type": [
+                "image/svg+xml"
+              ],
+              "X-Content-Type-Options": [
+                "nosniff"
+              ]
+            },
+            "Body": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#EEE\" d=\"M36 27a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4h28a4 4 0 0 1 4 4v18z\"/><circle cx=\"18\" cy=\"18\" r=\"7\" fill=\"#ED1B2F\"/></svg>"
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/resource/plugins/opencode/flag.svg",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": {
+            "cc": [
+              "zz"
+            ]
+          },
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 404,
+            "Headers": {
+              "Cache-Control": [
+                "public, max-age=86400"
+              ],
+              "Content-Type": [
+                "text/plain; charset=utf-8"
+              ]
+            },
+            "Body": "unknown country code"
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/management/plugins/opencode/nope",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 404,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "error": "not_found",
+              "message": "plugin route not found"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "DELETE",
+          "Path": "/v0/management/plugins/opencode/status",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 405,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "error": "method_not_allowed",
+              "message": "method not allowed on this route"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "request.intercept_before",
+        "request": {
+          "RequestID": "exec-0",
+          "TraceID": "",
+          "SourceFormat": "",
+          "ToFormat": "",
+          "Model": "opencode/kimi-k3",
+          "RequestedModel": "",
+          "Stream": false,
+          "Headers": null,
+          "Body": null,
+          "CallerScope": "",
+          "Metadata": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "Headers": null,
+            "Body": null,
+            "ClearHeaders": null,
+            "Terminate": false,
+            "StatusCode": 0,
+            "ResponseHeaders": null,
+            "ResponseBody": null
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,542 @@
+{
+  "case": "error_rejected_before_upstream",
+  "description": "Requests the plugin refuses without calling OpenCode (no model, unknown format, no api_key, bad proxy) and their request log rows",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      },
+      {
+        "name": "opencode-nokey.json",
+        "fields": {
+          "type": "opencode"
+        }
+      },
+      {
+        "name": "opencode-badproxy.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0003",
+          "proxy_url": "ftp://10.0.0.1:21",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [],
+  "steps": [
+    {
+      "rpc": {
+        "method": "executor.execute",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "",
+          "Format": "openai",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "no model"
+              }
+            ]
+          },
+          "SourceFormat": "openai",
+          "Payload": {
+            "messages": [
+              {
+                "role": "user",
+                "content": "no model"
+              }
+            ]
+          },
+          "Metadata": {
+            "request_path": "/v1/chat/completions",
+            "requested_model": "",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "invalid_request",
+            "message": "opencode: request has no model",
+            "http_status": 400
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.execute",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "gemini",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "temperature": 0.2
+          },
+          "SourceFormat": "gemini",
+          "Payload": {
+            "model": "kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "temperature": 0.2
+          },
+          "Metadata": {
+            "request_path": "",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "unsupported_format",
+            "message": "opencode: unsupported executor format gemini",
+            "http_status": 400
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.execute_stream",
+        "request": {
+          "AuthID": "opencode-nokey.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai",
+          "Stream": true,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "text/event-stream"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "SourceFormat": "openai",
+          "Payload": {
+            "model": "kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "Metadata": {
+            "request_path": "/v1/chat/completions",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-nokey.json",
+            "selected_auth_index": "idx-2"
+          },
+          "StorageJSON": {
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "stream_id": "stream-nokey-1",
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "invalid_credential",
+            "message": "opencode: credential has no api_key",
+            "http_status": 401
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.execute",
+        "request": {
+          "AuthID": "opencode-badproxy.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "temperature": 0.2
+          },
+          "SourceFormat": "openai",
+          "Payload": {
+            "model": "kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "temperature": 0.2
+          },
+          "Metadata": {
+            "request_path": "/v1/chat/completions",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-badproxy.json",
+            "selected_auth_index": "idx-3"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0003",
+            "proxy_url": "ftp://10.0.0.1:21",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0003",
+            "proxy_url": "ftp://10.0.0.1:21",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "invalid_proxy",
+            "message": "opencode: invalid proxy_url: unsupported scheme \"ftp\" (use http, https, socks5 or socks5h)",
+            "http_status": 502
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.count_tokens",
+        "request": {
+          "AuthID": "opencode-nokey.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "claude",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "system": "Be brief.",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Count me"
+              }
+            ]
+          },
+          "SourceFormat": "claude",
+          "Payload": {
+            "model": "kimi-k3",
+            "system": "Be brief.",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Count me"
+              }
+            ]
+          },
+          "Metadata": {
+            "request_path": "/v1/messages",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-nokey.json",
+            "selected_auth_index": "idx-2"
+          },
+          "StorageJSON": {
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "invalid_credential",
+            "message": "opencode: credential has no api_key",
+            "http_status": 401
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/management/plugins/opencode/logs",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "items": [
+                {
+                  "id": "3",
+                  "time": "<volatile>",
+                  "endpoint": "/openai/v1/chat/completions",
+                  "model": "opencode/kimi-k3",
+                  "stream": false,
+                  "status": "error",
+                  "http_status": 502,
+                  "auth_id": "opencode-badproxy.json",
+                  "duration_ms": "<volatile>",
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "cached_tokens": 0,
+                  "error_code": "invalid_proxy",
+                  "error": "opencode: invalid proxy_url: unsupported scheme \"ftp\" (use http, https, socks5 or socks5h)",
+                  "error_phase": "request",
+                  "client_path": "/v1/chat/completions",
+                  "user_agent": "snapshot-client/1.0",
+                  "auth_index": "idx-3",
+                  "attempts": 1
+                },
+                {
+                  "id": "2",
+                  "time": "<volatile>",
+                  "endpoint": "/openai/v1/chat/completions",
+                  "model": "opencode/kimi-k3",
+                  "stream": true,
+                  "status": "error",
+                  "http_status": 401,
+                  "auth_id": "opencode-nokey.json",
+                  "duration_ms": "<volatile>",
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "cached_tokens": 0,
+                  "error_code": "invalid_credential",
+                  "error": "opencode: credential has no api_key",
+                  "error_phase": "request",
+                  "client_path": "/v1/chat/completions",
+                  "user_agent": "snapshot-client/1.0",
+                  "auth_index": "idx-2",
+                  "attempts": 1
+                },
+                {
+                  "id": "1",
+                  "time": "<volatile>",
+                  "endpoint": "/openai/v1/chat/completions",
+                  "model": "",
+                  "stream": false,
+                  "status": "error",
+                  "http_status": 400,
+                  "auth_id": "opencode-k1.json",
+                  "duration_ms": "<volatile>",
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "cached_tokens": 0,
+                  "error_code": "invalid_request",
+                  "error": "opencode: request has no model",
+                  "error_phase": "request",
+                  "client_path": "/v1/chat/completions",
+                  "user_agent": "snapshot-client/1.0",
+                  "auth_index": "idx-1",
+                  "attempts": 1
+                }
+              ],
+              "total": 3,
+              "offset": 0,
+              "retention": 100000,
+              "retention_days": 30,
+              "summary": {
+                "requests": 3,
+                "success": 0,
+                "failed": 3,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "cached_tokens": 0,
+                "cache_hit_rate": null,
+                "output_tokens_per_second": "<volatile>",
+                "e2e_tokens_per_second": "<volatile>"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

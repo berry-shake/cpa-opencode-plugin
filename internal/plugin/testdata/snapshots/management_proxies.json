@@ -1,0 +1,762 @@
+{
+  "case": "management_proxies",
+  "description": "The proxy list: add (redacted URL), invalid and duplicate URLs, import from credentials, status matching, unknown IDs",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-p1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "proxy_url": "socks5://user:pw@10.0.0.1:1080",
+          "type": "opencode"
+        }
+      },
+      {
+        "name": "opencode-p2.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0002",
+          "proxy_url": "direct",
+          "type": "opencode"
+        }
+      },
+      {
+        "name": "opencode-p3.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0003",
+          "proxy_url": "http://10.0.0.2:3128",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [],
+  "steps": [
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/management/plugins/opencode/proxies",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "proxies": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "POST",
+          "Path": "/v0/management/plugins/opencode/proxies",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Content-Type": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": {
+            "name": "Tokyo",
+            "url": "http://user:pass@10.0.0.3:3128"
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [
+          {
+            "method": "host.log",
+            "request": {
+              "level": "info",
+              "message": "opencode: added proxy",
+              "fields": {
+                "proxy": "http://10.0.0.3:3128"
+              }
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 201,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "ok": true,
+              "proxy": {
+                "id": "<volatile>",
+                "name": "Tokyo",
+                "url": "http://user:xxxxx@10.0.0.3:3128",
+                "label": "http://10.0.0.3:3128",
+                "created_at": "<volatile>"
+              },
+              "updated_credentials": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "POST",
+          "Path": "/v0/management/plugins/opencode/proxies",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Content-Type": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": {
+            "name": "Bad",
+            "url": "ftp://10.0.0.4:21"
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 400,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "error": "invalid_proxy",
+              "message": "url: invalid proxy_url: unsupported scheme \"ftp\" (use http, https, socks5 or socks5h)"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "POST",
+          "Path": "/v0/management/plugins/opencode/proxies",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Content-Type": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": {
+            "url": "http://user:pass@10.0.0.3:3128"
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 409,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "error": "duplicate_proxy",
+              "message": "this proxy URL is already in the list"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "POST",
+          "Path": "/v0/management/plugins/opencode/proxies/import",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [
+          {
+            "method": "host.auth.list",
+            "request": {}
+          },
+          {
+            "method": "host.auth.get",
+            "request": {
+              "auth_index": "idx-1"
+            }
+          },
+          {
+            "method": "host.auth.get",
+            "request": {
+              "auth_index": "idx-2"
+            }
+          },
+          {
+            "method": "host.auth.get",
+            "request": {
+              "auth_index": "idx-3"
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "added": 2,
+              "ok": true,
+              "proxies": [
+                {
+                  "id": "<volatile>",
+                  "name": "Tokyo",
+                  "url": "http://user:xxxxx@10.0.0.3:3128",
+                  "label": "http://10.0.0.3:3128",
+                  "created_at": "<volatile>"
+                },
+                {
+                  "id": "<volatile>",
+                  "name": "10.0.0.1:1080",
+                  "url": "socks5://user:xxxxx@10.0.0.1:1080",
+                  "label": "socks5://10.0.0.1:1080",
+                  "created_at": "<volatile>"
+                },
+                {
+                  "id": "<volatile>",
+                  "name": "10.0.0.2:3128",
+                  "url": "http://10.0.0.2:3128",
+                  "label": "http://10.0.0.2:3128",
+                  "created_at": "<volatile>"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/management/plugins/opencode/proxies",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "proxies": [
+                {
+                  "id": "<volatile>",
+                  "name": "Tokyo",
+                  "url": "http://user:xxxxx@10.0.0.3:3128",
+                  "label": "http://10.0.0.3:3128",
+                  "created_at": "<volatile>"
+                },
+                {
+                  "id": "<volatile>",
+                  "name": "10.0.0.1:1080",
+                  "url": "socks5://user:xxxxx@10.0.0.1:1080",
+                  "label": "socks5://10.0.0.1:1080",
+                  "created_at": "<volatile>"
+                },
+                {
+                  "id": "<volatile>",
+                  "name": "10.0.0.2:3128",
+                  "url": "http://10.0.0.2:3128",
+                  "label": "http://10.0.0.2:3128",
+                  "created_at": "<volatile>"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/management/plugins/opencode/status",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [
+          {
+            "method": "host.auth.list",
+            "request": {}
+          },
+          {
+            "method": "host.auth.get",
+            "request": {
+              "auth_index": "idx-1"
+            }
+          },
+          {
+            "method": "host.auth.get",
+            "request": {
+              "auth_index": "idx-2"
+            }
+          },
+          {
+            "method": "host.auth.get",
+            "request": {
+              "auth_index": "idx-3"
+            }
+          },
+          {
+            "method": "host.auth.models",
+            "request": {}
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "plugin": "opencode",
+              "version": "9.9.9-snapshot",
+              "now": "2026-01-02T03:04:05Z",
+              "config": {
+                "base_url": "{{UPSTREAM}}/inference/go",
+                "default_prefix": "opencode",
+                "models_refresh_minutes": 60,
+                "request_timeout_seconds": 600,
+                "stream_idle_timeout_seconds": 300
+              },
+              "catalog": {
+                "count": 0
+              },
+              "credentials": [
+                {
+                  "auth_index": "idx-1",
+                  "id": "opencode-p1.json",
+                  "name": "opencode-p1.json",
+                  "label": "",
+                  "key_masked": "oc_sk_…0001",
+                  "disabled": false,
+                  "unavailable": false,
+                  "priority": 0,
+                  "proxy_url": "socks5://user:xxxxx@10.0.0.1:1080",
+                  "proxy_id": "<volatile>",
+                  "proxy_name": "10.0.0.1:1080",
+                  "prefix": null,
+                  "effective_prefix": "opencode",
+                  "all_models": true,
+                  "models": [],
+                  "registered_models": 0,
+                  "registered_known": true,
+                  "success": 0,
+                  "failed": 0
+                },
+                {
+                  "auth_index": "idx-2",
+                  "id": "opencode-p2.json",
+                  "name": "opencode-p2.json",
+                  "label": "",
+                  "key_masked": "oc_sk_…0002",
+                  "disabled": false,
+                  "unavailable": false,
+                  "priority": 0,
+                  "proxy_url": "direct",
+                  "prefix": null,
+                  "effective_prefix": "opencode",
+                  "all_models": true,
+                  "models": [],
+                  "registered_models": 0,
+                  "registered_known": true,
+                  "success": 0,
+                  "failed": 0
+                },
+                {
+                  "auth_index": "idx-3",
+                  "id": "opencode-p3.json",
+                  "name": "opencode-p3.json",
+                  "label": "",
+                  "key_masked": "oc_sk_…0003",
+                  "disabled": false,
+                  "unavailable": false,
+                  "priority": 0,
+                  "proxy_url": "http://10.0.0.2:3128",
+                  "proxy_id": "<volatile>",
+                  "proxy_name": "10.0.0.2:3128",
+                  "prefix": null,
+                  "effective_prefix": "opencode",
+                  "all_models": true,
+                  "models": [],
+                  "registered_models": 0,
+                  "registered_known": true,
+                  "success": 0,
+                  "failed": 0
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "DELETE",
+          "Path": "/v0/management/plugins/opencode/proxies",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": {
+            "id": [
+              "missing"
+            ]
+          },
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 404,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "error": "proxy_not_found",
+              "message": "no listed proxy has this id"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "PATCH",
+          "Path": "/v0/management/plugins/opencode/proxies",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Content-Type": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": {
+            "id": "missing",
+            "name": "x"
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 404,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "error": "proxy_not_found",
+              "message": "no listed proxy has this id"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "POST",
+          "Path": "/v0/management/plugins/opencode/proxies/check",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Content-Type": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": {
+            "target": "nowhere"
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 400,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "error": "invalid_target",
+              "message": "send {\"id\"} or {\"target\":\"direct\"|\"inherit\"}"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "POST",
+          "Path": "/v0/management/plugins/opencode/proxies/order",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Content-Type": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": {
+            "ids": [
+              "missing"
+            ]
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "ok": true,
+              "proxies": [
+                {
+                  "id": "<volatile>",
+                  "name": "Tokyo",
+                  "url": "http://user:xxxxx@10.0.0.3:3128",
+                  "label": "http://10.0.0.3:3128",
+                  "created_at": "<volatile>"
+                },
+                {
+                  "id": "<volatile>",
+                  "name": "10.0.0.1:1080",
+                  "url": "socks5://user:xxxxx@10.0.0.1:1080",
+                  "label": "socks5://10.0.0.1:1080",
+                  "created_at": "<volatile>"
+                },
+                {
+                  "id": "<volatile>",
+                  "name": "10.0.0.2:3128",
+                  "url": "http://10.0.0.2:3128",
+                  "label": "http://10.0.0.2:3128",
+                  "created_at": "<volatile>"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "POST",
+          "Path": "/v0/management/plugins/opencode/credentials",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Content-Type": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": {
+            "api_key": "oc_sk_test_fake_key_0004",
+            "proxy_id": "missing"
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 400,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "error": "proxy_not_found",
+              "message": "proxy_id does not match a listed proxy"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

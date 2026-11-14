@@ -1,0 +1,147 @@
+{
+  "case": "error_string_error_body",
+  "description": "Upstream 400 with a plain {\"error\":\"msg\"} body",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "POST",
+      "path": "/inference/go/openai/v1/chat/completions",
+      "status": 400,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"error\":\"model is required\"}",
+      "chunks": []
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "executor.execute",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "temperature": 0.2
+          },
+          "SourceFormat": "openai",
+          "Payload": {
+            "model": "kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "temperature": 0.2
+          },
+          "Metadata": {
+            "request_path": "/v1/chat/completions",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/openai/v1/chat/completions",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "104"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_39944b1fefeacc3f4a901109ea4554a3"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"max_tokens\":64,\"temperature\":0.2}"
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "upstream_400",
+            "message": "opencode: model is required",
+            "http_status": 400
+          }
+        }
+      }
+    }
+  ]
+}

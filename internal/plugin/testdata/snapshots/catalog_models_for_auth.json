@@ -1,0 +1,466 @@
+{
+  "case": "catalog_models_for_auth",
+  "description": "model.static, model.for_auth loading the catalog (with cost) on first use and reusing it, a model selection with a retired model, and the management models view",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      },
+      {
+        "name": "opencode-k2.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0002",
+          "models": [
+            "retired-model",
+            "kimi-k3"
+          ],
+          "prefix": "oc",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "GET",
+      "path": "/inference/go/v1/models",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"object\":\"list\",\"data\":[{\"id\":\"kimi-k3\",\"object\":\"model\",\"created\":1767225600,\"name\":\"Kimi K3\",\"type\":\"chat\",\"description\":\"Moonshot Kimi K3\",\"family\":\"kimi\",\"open_weights\":true,\"release_date\":\"2026-01-01\",\"modalities\":{\"input\":[\"text\",\"image/png\",\"application/pdf\"],\"output\":[\"text\"]},\"capabilities\":{\"tools\":{\"supported\":true},\"reasoning\":{\"supported\":true,\"effort\":[\"none\",\"low\",\"high\"]}},\"limit\":{\"context\":262144,\"output\":32768},\"cost\":{\"text\":{\"input\":{\"price\":0.6,\"cache\":{\"read\":0.15,\"write\":{\"30m\":0.75,\"12h\":1.2}},\"overrides\":[{\"when\":{\"context\":{\"gt\":128000}},\"price\":1.2}]},\"output\":{\"price\":2.5,\"overrides\":[{\"when\":{\"context\":{\"gt\":128000}},\"price\":5}]}},\"multipliers\":[{\"when\":{\"hours\":\"peak\"},\"factor\":1.5}]},\"api\":{\"messages\":{},\"chat-completions\":{}}},{\"id\":\"glm-5\",\"object\":\"model\",\"created\":1767312000,\"name\":\"GLM 5\",\"type\":\"chat\",\"family\":\"glm\",\"modalities\":{\"input\":[\"text\"]},\"capabilities\":{\"tools\":{\"supported\":true},\"reasoning\":{\"supported\":false}},\"limit\":{\"context\":200000,\"output\":16384},\"cost\":{\"text\":{\"input\":{\"price\":0},\"output\":{\"price\":0}}},\"api\":{\"chat-completions\":{}}},{\"id\":\"text-embed-1\",\"object\":\"model\",\"created\":1767398400,\"name\":\"Text Embed 1\",\"type\":\"embedding\",\"modalities\":{\"input\":[\"text\"]},\"limit\":{\"context\":8192,\"output\":0}},{\"id\":\"kimi-k3\",\"object\":\"model\",\"created\":1,\"name\":\"Duplicate entry\"}]}",
+      "chunks": []
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "model.static",
+        "request": null
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "Provider": "opencode",
+            "Models": null,
+            "AuthUpdate": {
+              "Provider": "",
+              "ID": "",
+              "FileName": "",
+              "Label": "",
+              "Prefix": "",
+              "ProxyURL": "",
+              "Disabled": false,
+              "StorageJSON": null,
+              "Metadata": null,
+              "Attributes": null,
+              "NextRefreshAfter": "0001-01-01T00:00:00Z"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "model.for_auth",
+        "request": {
+          "Plugin": {
+            "Name": "",
+            "Version": "",
+            "Author": "",
+            "GitHubRepository": "",
+            "Logo": "",
+            "ConfigFields": null
+          },
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "Metadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "Attributes": null,
+          "Host": {
+            "AuthDir": "/auths",
+            "ProxyURL": "",
+            "ForceModelPrefix": false,
+            "OAuthModelAlias": null,
+            "ExcludedModels": null
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "GET",
+            "path": "/inference/go/v1/models",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ]
+            },
+            "body": ""
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "Provider": "opencode",
+            "Models": [
+              {
+                "ID": "glm-5",
+                "Object": "model",
+                "Created": 1767312000,
+                "OwnedBy": "opencode",
+                "Type": "opencode",
+                "DisplayName": "GLM 5",
+                "Name": "glm-5",
+                "Version": "",
+                "Description": "OpenCode · glm-5",
+                "InputTokenLimit": 200000,
+                "OutputTokenLimit": 16384,
+                "SupportedGenerationMethods": null,
+                "ContextLength": 200000,
+                "MaxCompletionTokens": 16384,
+                "SupportedParameters": [
+                  "tools"
+                ],
+                "SupportedInputModalities": [
+                  "text"
+                ],
+                "SupportedOutputModalities": [
+                  "text"
+                ],
+                "Thinking": null,
+                "UserDefined": true
+              },
+              {
+                "ID": "kimi-k3",
+                "Object": "model",
+                "Created": 1767225600,
+                "OwnedBy": "opencode",
+                "Type": "opencode",
+                "DisplayName": "Kimi K3",
+                "Name": "kimi-k3",
+                "Version": "",
+                "Description": "Moonshot Kimi K3",
+                "InputTokenLimit": 262144,
+                "OutputTokenLimit": 32768,
+                "SupportedGenerationMethods": null,
+                "ContextLength": 262144,
+                "MaxCompletionTokens": 32768,
+                "SupportedParameters": [
+                  "tools",
+                  "reasoning"
+                ],
+                "SupportedInputModalities": [
+                  "text",
+                  "image",
+                  "pdf"
+                ],
+                "SupportedOutputModalities": [
+                  "text"
+                ],
+                "Thinking": {
+                  "Min": 0,
+                  "Max": 0,
+                  "ZeroAllowed": true,
+                  "DynamicAllowed": false,
+                  "DisableType": "",
+                  "Levels": [
+                    "none",
+                    "low",
+                    "high"
+                  ]
+                },
+                "UserDefined": true
+              }
+            ],
+            "AuthUpdate": {
+              "Provider": "",
+              "ID": "",
+              "FileName": "",
+              "Label": "",
+              "Prefix": "",
+              "ProxyURL": "",
+              "Disabled": false,
+              "StorageJSON": null,
+              "Metadata": null,
+              "Attributes": null,
+              "NextRefreshAfter": "0001-01-01T00:00:00Z"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "model.for_auth",
+        "request": {
+          "Plugin": {
+            "Name": "",
+            "Version": "",
+            "Author": "",
+            "GitHubRepository": "",
+            "Logo": "",
+            "ConfigFields": null
+          },
+          "AuthID": "opencode-k2.json",
+          "AuthProvider": "opencode",
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0002",
+            "models": [
+              "retired-model",
+              "kimi-k3"
+            ],
+            "prefix": "oc",
+            "type": "opencode"
+          },
+          "Metadata": {
+            "api_key": "oc_sk_test_fake_key_0002",
+            "models": [
+              "retired-model",
+              "kimi-k3"
+            ],
+            "prefix": "oc",
+            "type": "opencode"
+          },
+          "Attributes": null,
+          "Host": {
+            "AuthDir": "/auths",
+            "ProxyURL": "",
+            "ForceModelPrefix": true,
+            "OAuthModelAlias": null,
+            "ExcludedModels": null
+          },
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "Provider": "opencode",
+            "Models": [
+              {
+                "ID": "kimi-k3",
+                "Object": "model",
+                "Created": 1767225600,
+                "OwnedBy": "opencode",
+                "Type": "opencode",
+                "DisplayName": "Kimi K3",
+                "Name": "kimi-k3",
+                "Version": "",
+                "Description": "Moonshot Kimi K3",
+                "InputTokenLimit": 262144,
+                "OutputTokenLimit": 32768,
+                "SupportedGenerationMethods": null,
+                "ContextLength": 262144,
+                "MaxCompletionTokens": 32768,
+                "SupportedParameters": [
+                  "tools",
+                  "reasoning"
+                ],
+                "SupportedInputModalities": [
+                  "text",
+                  "image",
+                  "pdf"
+                ],
+                "SupportedOutputModalities": [
+                  "text"
+                ],
+                "Thinking": {
+                  "Min": 0,
+                  "Max": 0,
+                  "ZeroAllowed": true,
+                  "DynamicAllowed": false,
+                  "DisableType": "",
+                  "Levels": [
+                    "none",
+                    "low",
+                    "high"
+                  ]
+                },
+                "UserDefined": true
+              },
+              {
+                "ID": "retired-model",
+                "Object": "model",
+                "Created": 0,
+                "OwnedBy": "opencode",
+                "Type": "opencode",
+                "DisplayName": "retired-model",
+                "Name": "retired-model",
+                "Version": "",
+                "Description": "OpenCode · retired-model",
+                "InputTokenLimit": 0,
+                "OutputTokenLimit": 0,
+                "SupportedGenerationMethods": null,
+                "ContextLength": 0,
+                "MaxCompletionTokens": 0,
+                "SupportedParameters": null,
+                "SupportedInputModalities": [
+                  "text"
+                ],
+                "SupportedOutputModalities": [
+                  "text"
+                ],
+                "Thinking": null,
+                "UserDefined": true
+              }
+            ],
+            "AuthUpdate": {
+              "Provider": "",
+              "ID": "",
+              "FileName": "",
+              "Label": "",
+              "Prefix": "",
+              "ProxyURL": "",
+              "Disabled": false,
+              "StorageJSON": null,
+              "Metadata": null,
+              "Attributes": null,
+              "NextRefreshAfter": "0001-01-01T00:00:00Z"
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/management/plugins/opencode/models",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "catalog": {
+                "count": 3,
+                "revision": "9ddee370bd171071",
+                "fetched_at": "2026-01-02T03:04:05Z",
+                "checked_at": "2026-01-02T03:04:05Z"
+              },
+              "models": [
+                {
+                  "id": "glm-5",
+                  "name": "GLM 5",
+                  "family": "glm",
+                  "chat": true,
+                  "inputs": [
+                    "text"
+                  ],
+                  "tools": true,
+                  "context_length": 200000,
+                  "max_output": 16384,
+                  "native_api": "chat-completions",
+                  "pricing": {
+                    "input": 0,
+                    "output": 0,
+                    "free": true
+                  }
+                },
+                {
+                  "id": "kimi-k3",
+                  "name": "Kimi K3",
+                  "description": "Moonshot Kimi K3",
+                  "family": "kimi",
+                  "chat": true,
+                  "inputs": [
+                    "text",
+                    "image",
+                    "pdf"
+                  ],
+                  "tools": true,
+                  "reasoning": true,
+                  "reasoning_efforts": [
+                    "none",
+                    "low",
+                    "high"
+                  ],
+                  "context_length": 262144,
+                  "max_output": 32768,
+                  "native_api": "chat-completions",
+                  "open_weights": true,
+                  "release_date": "2026-01-01",
+                  "pricing": {
+                    "input": 0.6,
+                    "output": 2.5,
+                    "cache_read": 0.15,
+                    "cache_write": 0.75,
+                    "long_above": 128000,
+                    "long_input": 1.2,
+                    "long_output": 5,
+                    "peak_factor": 1.5
+                  }
+                },
+                {
+                  "id": "text-embed-1",
+                  "name": "Text Embed 1",
+                  "chat": false,
+                  "inputs": [
+                    "text"
+                  ],
+                  "context_length": 8192
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

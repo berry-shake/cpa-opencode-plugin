@@ -1,0 +1,288 @@
+{
+  "case": "count_tokens_error",
+  "description": "count_tokens upstream errors: 400 kept, 404 mapped to 400",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "POST",
+      "path": "/inference/go/anthropic/v1/messages/count_tokens",
+      "status": 400,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"messages: at least one message is required\"}}",
+      "chunks": []
+    },
+    {
+      "method": "POST",
+      "path": "/inference/go/anthropic/v1/messages/count_tokens",
+      "status": 404,
+      "header": {
+        "Content-Type": [
+          "text/plain"
+        ]
+      },
+      "body": "404 page not found",
+      "chunks": []
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "executor.count_tokens",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "claude",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Anthropic-Beta": [
+              "token-counting-2024-11-01"
+            ],
+            "Anthropic-Version": [
+              "2023-06-01"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "system": "Be brief.",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Count me"
+              }
+            ]
+          },
+          "SourceFormat": "claude",
+          "Payload": {
+            "model": "kimi-k3",
+            "system": "Be brief.",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Count me"
+              }
+            ]
+          },
+          "Metadata": {
+            "request_path": "/v1/messages",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/anthropic/v1/messages/count_tokens",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Anthropic-Beta": [
+                "token-counting-2024-11-01"
+              ],
+              "Anthropic-Version": [
+                "2023-06-01"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "90"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_44bcee84593c1ca46f11e7874227dd40"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"system\":\"Be brief.\",\"messages\":[{\"role\":\"user\",\"content\":\"Count me\"}]}"
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "invalid_request_error",
+            "message": "opencode: messages: at least one message is required",
+            "http_status": 400
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.count_tokens",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "claude",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Anthropic-Beta": [
+              "token-counting-2024-11-01"
+            ],
+            "Anthropic-Version": [
+              "2023-06-01"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "system": "Be brief.",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Count me"
+              }
+            ]
+          },
+          "SourceFormat": "claude",
+          "Payload": {
+            "model": "kimi-k3",
+            "system": "Be brief.",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Count me"
+              }
+            ]
+          },
+          "Metadata": {
+            "request_path": "/v1/messages",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/anthropic/v1/messages/count_tokens",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Anthropic-Beta": [
+                "token-counting-2024-11-01"
+              ],
+              "Anthropic-Version": [
+                "2023-06-01"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "90"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_44bcee84593c1ca46f11e7874227dd40"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"system\":\"Be brief.\",\"messages\":[{\"role\":\"user\",\"content\":\"Count me\"}]}"
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "upstream_404",
+            "message": "opencode: 404 page not found",
+            "http_status": 400
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,450 @@
+{
+  "case": "error_stream_truncated",
+  "description": "Streams that end without their terminal event close as stream_truncated",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "POST",
+      "path": "/inference/go/openai/v1/responses",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "text/event-stream"
+        ]
+      },
+      "body": "",
+      "chunks": [
+        "event: response.created\ndata: {\"type\":\"response.created\",\"sequence_number\":0,\"response\":{\"id\":\"resp_snap_2\",\"object\":\"response\",\"created_at\":1767225600,\"status\":\"in_progress\",\"model\":\"kimi-k3\",\"output\":[]}}\n\n",
+        "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"sequence_number\":1,\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_snap_2\",\"status\":\"in_progress\",\"role\":\"assistant\",\"content\":[]}}\n\n",
+        "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":2,\"item_id\":\"msg_snap_2\",\"output_index\":0,\"content_index\":0,\"delta\":\"Hello there!\"}\n\n"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/inference/go/openai/v1/chat/completions",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "text/event-stream"
+        ]
+      },
+      "body": "",
+      "chunks": [
+        "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"Hel\"}}]}\n\n"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "executor.execute_stream",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai-response",
+          "Stream": true,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "text/event-stream"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "instructions": "Be brief.",
+            "input": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "stream": true
+          },
+          "SourceFormat": "openai-response",
+          "Payload": {
+            "model": "kimi-k3",
+            "instructions": "Be brief.",
+            "input": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "stream": true
+          },
+          "Metadata": {
+            "request_path": "/v1/responses",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "stream_id": "stream-trunc-1",
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/openai/v1/responses",
+            "query": "",
+            "header": {
+              "Accept": [
+                "text/event-stream"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "108"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_90613463ca049d637ab26b4838c4a803"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"instructions\":\"Be brief.\",\"input\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"stream\":true}"
+          }
+        ],
+        "host_calls": [
+          {
+            "method": "host.stream.emit",
+            "request": {
+              "stream_id": "stream-trunc-1",
+              "payload": "event: response.created\ndata: {\"type\":\"response.created\",\"sequence_number\":0,\"response\":{\"id\":\"resp_snap_2\",\"object\":\"response\",\"created_at\":1767225600,\"status\":\"in_progress\",\"model\":\"kimi-k3\",\"output\":[]}}\n\n"
+            }
+          },
+          {
+            "method": "host.stream.emit",
+            "request": {
+              "stream_id": "stream-trunc-1",
+              "payload": "event: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"sequence_number\":1,\"output_index\":0,\"item\":{\"type\":\"message\",\"id\":\"msg_snap_2\",\"status\":\"in_progress\",\"role\":\"assistant\",\"content\":[]}}\n\n"
+            }
+          },
+          {
+            "method": "host.stream.emit",
+            "request": {
+              "stream_id": "stream-trunc-1",
+              "payload": "event: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":2,\"item_id\":\"msg_snap_2\",\"output_index\":0,\"content_index\":0,\"delta\":\"Hello there!\"}\n\n"
+            }
+          },
+          {
+            "method": "host.stream.close",
+            "request": {
+              "stream_id": "stream-trunc-1",
+              "error": "opencode: upstream stream ended before the response finished",
+              "error_detail": {
+                "code": "stream_truncated",
+                "message": "opencode: upstream stream ended before the response finished",
+                "retryable": true,
+                "http_status": 502
+              }
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "headers": {
+              "Content-Type": [
+                "text/event-stream"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.execute_stream",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai",
+          "Stream": true,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "text/event-stream"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "SourceFormat": "openai",
+          "Payload": {
+            "model": "kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "Metadata": {
+            "request_path": "/v1/chat/completions",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "stream_id": "stream-trunc-2",
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/openai/v1/chat/completions",
+            "query": "",
+            "header": {
+              "Accept": [
+                "text/event-stream"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "140"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_39944b1fefeacc3f4a901109ea4554a3"
+              ]
+            },
+            "body": "{\"stream_options\":{\"include_usage\":true},\"model\":\"kimi-k3\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"max_tokens\":64,\"stream\":true}"
+          }
+        ],
+        "host_calls": [
+          {
+            "method": "host.stream.emit",
+            "request": {
+              "stream_id": "stream-trunc-2",
+              "payload": "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"Hel\"}}]}\n\n"
+            }
+          },
+          {
+            "method": "host.stream.close",
+            "request": {
+              "stream_id": "stream-trunc-2",
+              "error": "opencode: upstream stream ended before the response finished",
+              "error_detail": {
+                "code": "stream_truncated",
+                "message": "opencode: upstream stream ended before the response finished",
+                "retryable": true,
+                "http_status": 502
+              }
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "headers": {
+              "Content-Type": [
+                "text/event-stream"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/management/plugins/opencode/logs",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "items": [
+                {
+                  "id": "2",
+                  "time": "<volatile>",
+                  "endpoint": "/openai/v1/chat/completions",
+                  "model": "opencode/kimi-k3",
+                  "upstream_model": "kimi-k3",
+                  "served_model": "kimi-k3",
+                  "stream": true,
+                  "status": "error",
+                  "http_status": 502,
+                  "credential": "oc_sk_…0001",
+                  "auth_id": "opencode-k1.json",
+                  "duration_ms": "<volatile>",
+                  "ttft_ms": "<volatile>",
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "cached_tokens": 0,
+                  "error_code": "stream_truncated",
+                  "error": "opencode: upstream stream ended before the response finished",
+                  "error_phase": "stream",
+                  "client_path": "/v1/chat/completions",
+                  "user_agent": "snapshot-client/1.0",
+                  "auth_index": "idx-1",
+                  "egress": "env",
+                  "upstream_status": 200,
+                  "frames": 1,
+                  "last_frame_ms": "<volatile>",
+                  "usage_reported": false,
+                  "attempts": 1
+                },
+                {
+                  "id": "1",
+                  "time": "<volatile>",
+                  "endpoint": "/openai/v1/responses",
+                  "model": "opencode/kimi-k3",
+                  "upstream_model": "kimi-k3",
+                  "served_model": "kimi-k3",
+                  "stream": true,
+                  "status": "error",
+                  "http_status": 502,
+                  "credential": "oc_sk_…0001",
+                  "auth_id": "opencode-k1.json",
+                  "duration_ms": "<volatile>",
+                  "ttft_ms": "<volatile>",
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "cached_tokens": 0,
+                  "error_code": "stream_truncated",
+                  "error": "opencode: upstream stream ended before the response finished",
+                  "error_phase": "stream",
+                  "client_path": "/v1/responses",
+                  "user_agent": "snapshot-client/1.0",
+                  "auth_index": "idx-1",
+                  "egress": "env",
+                  "upstream_status": 200,
+                  "frames": 1,
+                  "last_frame_ms": "<volatile>",
+                  "usage_reported": false,
+                  "attempts": 1
+                }
+              ],
+              "total": 2,
+              "offset": 0,
+              "retention": 100000,
+              "retention_days": 30,
+              "summary": {
+                "requests": 2,
+                "success": 0,
+                "failed": 2,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "cached_tokens": 0,
+                "cache_hit_rate": null,
+                "output_tokens_per_second": "<volatile>",
+                "e2e_tokens_per_second": "<volatile>"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

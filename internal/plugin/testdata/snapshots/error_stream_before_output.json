@@ -1,0 +1,771 @@
+{
+  "case": "error_stream_before_output",
+  "description": "Error events before any output close the stream with a mapped error: rate limit/budget (429 + Retry-After), insufficient quota (402), response.failed usage limit (429), overloaded (529 -> 503)",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "POST",
+      "path": "/inference/go/anthropic/v1/messages",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "text/event-stream"
+        ],
+        "Retry-After": [
+          "120"
+        ]
+      },
+      "body": "",
+      "chunks": [
+        "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_snap_2\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"kimi-k3\",\"content\":[],\"stop_reason\":null,\"usage\":{\"input_tokens\":12,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":7,\"output_tokens\":1}}}\n\n",
+        "event: ping\ndata: {\"type\":\"ping\"}\n\n",
+        "event: error\ndata: {\"type\":\"error\",\"error\":{\"type\":\"rate_limit_error\",\"message\":\"Go usage limit reached: budget exceeded for the 5-hour window\"}}\n\n"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/inference/go/openai/v1/chat/completions",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "text/event-stream"
+        ]
+      },
+      "body": "",
+      "chunks": [
+        "data: {\"id\":\"chatcmpl-snap-2\",\"object\":\"chat.completion.chunk\",\"created\":1767225600,\"model\":\"kimi-k3\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\"}}]}\n\n",
+        "data: {\"error\":{\"code\":\"insufficient_quota\",\"message\":\"Insufficient balance\"}}\n\n"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/inference/go/openai/v1/responses",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "text/event-stream"
+        ]
+      },
+      "body": "",
+      "chunks": [
+        "event: response.created\ndata: {\"type\":\"response.created\",\"sequence_number\":0,\"response\":{\"id\":\"resp_snap_2\",\"object\":\"response\",\"created_at\":1767225600,\"status\":\"in_progress\",\"model\":\"kimi-k3\",\"output\":[]}}\n\n",
+        "event: response.failed\ndata: {\"type\":\"response.failed\",\"sequence_number\":1,\"response\":{\"id\":\"resp_snap_3\",\"status\":\"failed\",\"error\":{\"code\":\"usage_limit_reached\",\"message\":\"Go usage limit reached\"}}}\n\n"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/inference/go/openai/v1/chat/completions",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "text/event-stream"
+        ]
+      },
+      "body": "",
+      "chunks": [
+        "data: {\"error\":{\"type\":\"overloaded\",\"message\":\"Model is overloaded\"}}\n\n"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "executor.execute_stream",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "claude",
+          "Stream": true,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "text/event-stream"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "max_tokens": 256,
+            "system": "Be brief.",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "stream": true,
+            "output_config": {
+              "effort": "medium"
+            }
+          },
+          "SourceFormat": "claude",
+          "Payload": {
+            "model": "kimi-k3",
+            "max_tokens": 256,
+            "system": "Be brief.",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "stream": true,
+            "output_config": {
+              "effort": "medium"
+            }
+          },
+          "Metadata": {
+            "request_path": "/v1/messages",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "stream_id": "stream-before-1",
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/anthropic/v1/messages",
+            "query": "",
+            "header": {
+              "Accept": [
+                "text/event-stream"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Anthropic-Version": [
+                "2023-06-01"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "158"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_90613463ca049d637ab26b4838c4a803"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"max_tokens\":256,\"system\":\"Be brief.\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"stream\":true,\"output_config\":{\"effort\":\"medium\"}}"
+          }
+        ],
+        "host_calls": [
+          {
+            "method": "host.stream.close",
+            "request": {
+              "stream_id": "stream-before-1",
+              "error": "opencode: Go usage limit reached: budget exceeded for the 5-hour window",
+              "error_detail": {
+                "code": "rate_limit_error",
+                "message": "opencode: Go usage limit reached: budget exceeded for the 5-hour window",
+                "retryable": true,
+                "http_status": 429,
+                "retry_after_seconds": 120
+              }
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "headers": {
+              "Content-Type": [
+                "text/event-stream"
+              ],
+              "Retry-After": [
+                "120"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.execute_stream",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai",
+          "Stream": true,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "text/event-stream"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "SourceFormat": "openai",
+          "Payload": {
+            "model": "kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "Metadata": {
+            "request_path": "/v1/chat/completions",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "stream_id": "stream-before-2",
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/openai/v1/chat/completions",
+            "query": "",
+            "header": {
+              "Accept": [
+                "text/event-stream"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "140"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_39944b1fefeacc3f4a901109ea4554a3"
+              ]
+            },
+            "body": "{\"stream_options\":{\"include_usage\":true},\"model\":\"kimi-k3\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"max_tokens\":64,\"stream\":true}"
+          }
+        ],
+        "host_calls": [
+          {
+            "method": "host.stream.close",
+            "request": {
+              "stream_id": "stream-before-2",
+              "error": "opencode: Insufficient balance",
+              "error_detail": {
+                "code": "insufficient_quota",
+                "message": "opencode: Insufficient balance",
+                "http_status": 402
+              }
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "headers": {
+              "Content-Type": [
+                "text/event-stream"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.execute_stream",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai-response",
+          "Stream": true,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "text/event-stream"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "instructions": "Be brief.",
+            "input": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "stream": true
+          },
+          "SourceFormat": "openai-response",
+          "Payload": {
+            "model": "kimi-k3",
+            "instructions": "Be brief.",
+            "input": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "stream": true
+          },
+          "Metadata": {
+            "request_path": "/v1/responses",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "stream_id": "stream-before-3",
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/openai/v1/responses",
+            "query": "",
+            "header": {
+              "Accept": [
+                "text/event-stream"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "108"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_90613463ca049d637ab26b4838c4a803"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"instructions\":\"Be brief.\",\"input\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"stream\":true}"
+          }
+        ],
+        "host_calls": [
+          {
+            "method": "host.stream.close",
+            "request": {
+              "stream_id": "stream-before-3",
+              "error": "opencode: Go usage limit reached",
+              "error_detail": {
+                "code": "usage_limit_reached",
+                "message": "opencode: Go usage limit reached",
+                "retryable": true,
+                "http_status": 429
+              }
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "headers": {
+              "Content-Type": [
+                "text/event-stream"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.execute_stream",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai",
+          "Stream": true,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "text/event-stream"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "SourceFormat": "openai",
+          "Payload": {
+            "model": "kimi-k3",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "max_tokens": 64,
+            "stream": true
+          },
+          "Metadata": {
+            "request_path": "/v1/chat/completions",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "stream_id": "stream-before-4",
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/openai/v1/chat/completions",
+            "query": "",
+            "header": {
+              "Accept": [
+                "text/event-stream"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "140"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_39944b1fefeacc3f4a901109ea4554a3"
+              ]
+            },
+            "body": "{\"stream_options\":{\"include_usage\":true},\"model\":\"kimi-k3\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"max_tokens\":64,\"stream\":true}"
+          }
+        ],
+        "host_calls": [
+          {
+            "method": "host.stream.close",
+            "request": {
+              "stream_id": "stream-before-4",
+              "error": "opencode: Model is overloaded",
+              "error_detail": {
+                "code": "overloaded",
+                "message": "opencode: Model is overloaded",
+                "retryable": true,
+                "http_status": 503
+              }
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "headers": {
+              "Content-Type": [
+                "text/event-stream"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "management.handle",
+        "request": {
+          "Method": "GET",
+          "Path": "/v0/management/plugins/opencode/logs",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ]
+          },
+          "Query": null,
+          "Body": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "StatusCode": 200,
+            "Headers": {
+              "Cache-Control": [
+                "no-store"
+              ],
+              "Content-Type": [
+                "application/json; charset=utf-8"
+              ]
+            },
+            "Body": {
+              "items": [
+                {
+                  "id": "4",
+                  "time": "<volatile>",
+                  "endpoint": "/openai/v1/chat/completions",
+                  "model": "opencode/kimi-k3",
+                  "upstream_model": "kimi-k3",
+                  "stream": true,
+                  "status": "error",
+                  "http_status": 503,
+                  "credential": "oc_sk_…0001",
+                  "auth_id": "opencode-k1.json",
+                  "duration_ms": "<volatile>",
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "cached_tokens": 0,
+                  "error_code": "overloaded",
+                  "error": "opencode: Model is overloaded",
+                  "error_phase": "request",
+                  "client_path": "/v1/chat/completions",
+                  "user_agent": "snapshot-client/1.0",
+                  "auth_index": "idx-1",
+                  "egress": "env",
+                  "upstream_status": 200,
+                  "frames": 0,
+                  "attempts": 1
+                },
+                {
+                  "id": "3",
+                  "time": "<volatile>",
+                  "endpoint": "/openai/v1/responses",
+                  "model": "opencode/kimi-k3",
+                  "upstream_model": "kimi-k3",
+                  "served_model": "kimi-k3",
+                  "stream": true,
+                  "status": "error",
+                  "http_status": 429,
+                  "credential": "oc_sk_…0001",
+                  "auth_id": "opencode-k1.json",
+                  "duration_ms": "<volatile>",
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "cached_tokens": 0,
+                  "error_code": "usage_limit_reached",
+                  "error": "opencode: Go usage limit reached",
+                  "error_phase": "request",
+                  "client_path": "/v1/responses",
+                  "user_agent": "snapshot-client/1.0",
+                  "auth_index": "idx-1",
+                  "egress": "env",
+                  "upstream_status": 200,
+                  "finish_reason": "failed",
+                  "frames": 0,
+                  "attempts": 1
+                },
+                {
+                  "id": "2",
+                  "time": "<volatile>",
+                  "endpoint": "/openai/v1/chat/completions",
+                  "model": "opencode/kimi-k3",
+                  "upstream_model": "kimi-k3",
+                  "served_model": "kimi-k3",
+                  "stream": true,
+                  "status": "error",
+                  "http_status": 402,
+                  "credential": "oc_sk_…0001",
+                  "auth_id": "opencode-k1.json",
+                  "duration_ms": "<volatile>",
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "cached_tokens": 0,
+                  "error_code": "insufficient_quota",
+                  "error": "opencode: Insufficient balance",
+                  "error_phase": "request",
+                  "client_path": "/v1/chat/completions",
+                  "user_agent": "snapshot-client/1.0",
+                  "auth_index": "idx-1",
+                  "egress": "env",
+                  "upstream_status": 200,
+                  "frames": 0,
+                  "attempts": 1
+                },
+                {
+                  "id": "1",
+                  "time": "<volatile>",
+                  "endpoint": "/anthropic/v1/messages",
+                  "model": "opencode/kimi-k3",
+                  "upstream_model": "kimi-k3",
+                  "served_model": "kimi-k3",
+                  "reasoning_effort": "medium",
+                  "stream": true,
+                  "status": "error",
+                  "http_status": 429,
+                  "credential": "oc_sk_…0001",
+                  "auth_id": "opencode-k1.json",
+                  "duration_ms": "<volatile>",
+                  "input_tokens": 19,
+                  "output_tokens": 1,
+                  "cached_tokens": 7,
+                  "error_code": "rate_limit_error",
+                  "error": "opencode: Go usage limit reached: budget exceeded for the 5-hour window",
+                  "error_phase": "request",
+                  "client_path": "/v1/messages",
+                  "user_agent": "snapshot-client/1.0",
+                  "auth_index": "idx-1",
+                  "egress": "env",
+                  "upstream_status": 200,
+                  "retry_after": 120,
+                  "frames": 0,
+                  "attempts": 1
+                }
+              ],
+              "total": 4,
+              "offset": 0,
+              "retention": 100000,
+              "retention_days": 30,
+              "summary": {
+                "requests": 4,
+                "success": 0,
+                "failed": 4,
+                "input_tokens": 19,
+                "output_tokens": 1,
+                "cached_tokens": 7,
+                "cache_hit_rate": 0.3684210526315789,
+                "output_tokens_per_second": "<volatile>",
+                "e2e_tokens_per_second": "<volatile>"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

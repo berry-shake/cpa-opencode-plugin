@@ -1,0 +1,200 @@
+{
+  "case": "exec_responses_nonstream",
+  "description": "OpenAI Responses, buffered, with reasoning effort and usage",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "POST",
+      "path": "/inference/go/openai/v1/responses",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ],
+        "Request-Id": [
+          "oc-req-resp-1"
+        ]
+      },
+      "body": "{\"id\":\"resp_snap_1\",\"object\":\"response\",\"created_at\":1767225600,\"status\":\"completed\",\"model\":\"kimi-k3\",\"output\":[{\"type\":\"reasoning\",\"id\":\"rs_snap_1\",\"summary\":[]},{\"type\":\"message\",\"id\":\"msg_snap_1\",\"status\":\"completed\",\"role\":\"assistant\",\"content\":[{\"type\":\"output_text\",\"text\":\"Hello there!\",\"annotations\":[]}]}],\"usage\":{\"input_tokens\":20,\"input_tokens_details\":{\"cached_tokens\":8},\"output_tokens\":6,\"output_tokens_details\":{\"reasoning_tokens\":2},\"total_tokens\":26}}",
+      "chunks": []
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "executor.execute",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "openai-response",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "instructions": "Be brief.",
+            "input": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "reasoning": {
+              "effort": "high"
+            },
+            "max_output_tokens": 256
+          },
+          "SourceFormat": "openai-response",
+          "Payload": {
+            "model": "kimi-k3",
+            "instructions": "Be brief.",
+            "input": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ],
+            "reasoning": {
+              "effort": "high"
+            },
+            "max_output_tokens": 256
+          },
+          "Metadata": {
+            "request_path": "/v1/responses",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/openai/v1/responses",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "148"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_90613463ca049d637ab26b4838c4a803"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"instructions\":\"Be brief.\",\"input\":[{\"role\":\"user\",\"content\":\"Say hello\"}],\"reasoning\":{\"effort\":\"high\"},\"max_output_tokens\":256}"
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "Payload": {
+              "id": "resp_snap_1",
+              "object": "response",
+              "created_at": 1767225600,
+              "status": "completed",
+              "model": "kimi-k3",
+              "output": [
+                {
+                  "type": "reasoning",
+                  "id": "rs_snap_1",
+                  "summary": []
+                },
+                {
+                  "type": "message",
+                  "id": "msg_snap_1",
+                  "status": "completed",
+                  "role": "assistant",
+                  "content": [
+                    {
+                      "type": "output_text",
+                      "text": "Hello there!",
+                      "annotations": []
+                    }
+                  ]
+                }
+              ],
+              "usage": {
+                "input_tokens": 20,
+                "input_tokens_details": {
+                  "cached_tokens": 8
+                },
+                "output_tokens": 6,
+                "output_tokens_details": {
+                  "reasoning_tokens": 2
+                },
+                "total_tokens": 26
+              }
+            },
+            "Headers": {
+              "Content-Type": [
+                "application/json"
+              ],
+              "Request-Id": [
+                "oc-req-resp-1"
+              ]
+            },
+            "Metadata": null
+          }
+        }
+      }
+    }
+  ]
+}

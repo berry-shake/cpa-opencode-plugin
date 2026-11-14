@@ -1,0 +1,465 @@
+{
+  "case": "lifecycle_register_and_identifiers",
+  "description": "plugin.register (schema 10 and a host without a schema), config warnings, identifiers, unsupported operations, unknown methods, shutdown",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": []
+  },
+  "upstream_script": [
+    {
+      "method": "GET",
+      "path": "/inference/go/v1/models",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"object\":\"list\",\"data\":[{\"id\":\"kimi-k3\",\"object\":\"model\",\"created\":1767225600,\"name\":\"Kimi K3\",\"type\":\"chat\",\"description\":\"Moonshot Kimi K3\",\"family\":\"kimi\",\"open_weights\":true,\"release_date\":\"2026-01-01\",\"modalities\":{\"input\":[\"text\",\"image/png\",\"application/pdf\"],\"output\":[\"text\"]},\"capabilities\":{\"tools\":{\"supported\":true},\"reasoning\":{\"supported\":true,\"effort\":[\"none\",\"low\",\"high\"]}},\"limit\":{\"context\":262144,\"output\":32768},\"cost\":{\"text\":{\"input\":{\"price\":0.6,\"cache\":{\"read\":0.15,\"write\":{\"30m\":0.75,\"12h\":1.2}},\"overrides\":[{\"when\":{\"context\":{\"gt\":128000}},\"price\":1.2}]},\"output\":{\"price\":2.5,\"overrides\":[{\"when\":{\"context\":{\"gt\":128000}},\"price\":5}]}},\"multipliers\":[{\"when\":{\"hours\":\"peak\"},\"factor\":1.5}]},\"api\":{\"messages\":{},\"chat-completions\":{}}},{\"id\":\"glm-5\",\"object\":\"model\",\"created\":1767312000,\"name\":\"GLM 5\",\"type\":\"chat\",\"family\":\"glm\",\"modalities\":{\"input\":[\"text\"]},\"capabilities\":{\"tools\":{\"supported\":true},\"reasoning\":{\"supported\":false}},\"limit\":{\"context\":200000,\"output\":16384},\"cost\":{\"text\":{\"input\":{\"price\":0},\"output\":{\"price\":0}}},\"api\":{\"chat-completions\":{}}},{\"id\":\"text-embed-1\",\"object\":\"model\",\"created\":1767398400,\"name\":\"Text Embed 1\",\"type\":\"embedding\",\"modalities\":{\"input\":[\"text\"]},\"limit\":{\"context\":8192,\"output\":0}},{\"id\":\"kimi-k3\",\"object\":\"model\",\"created\":1,\"name\":\"Duplicate entry\"}]}",
+      "chunks": []
+    },
+    {
+      "method": "GET",
+      "path": "/inference/go/v1/models",
+      "status": 503,
+      "header": {
+        "Content-Type": [
+          "text/plain"
+        ]
+      },
+      "body": "maintenance",
+      "chunks": []
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "plugin.register",
+        "request": {
+          "config_yaml": "base-url: '{{UPSTREAM}}/inference/go'\ndata-dir: '{{DATA_DIR}}'\nenabled: true\npriority: 0\n",
+          "schema_version": 10
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "GET",
+            "path": "/inference/go/v1/models",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ]
+            },
+            "body": ""
+          }
+        ],
+        "host_calls": [
+          {
+            "method": "host.auth.list",
+            "request": {}
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "schema_version": 7,
+            "metadata": {
+              "Name": "OpenCode",
+              "Version": "9.9.9-snapshot",
+              "Author": "berry-shake",
+              "GitHubRepository": "https://github.com/berry-shake/cpa-opencode-plugin",
+              "Logo": "/v0/resource/plugins/opencode/logo.svg",
+              "ConfigFields": [
+                {
+                  "Name": "base-url",
+                  "Type": "string",
+                  "Default": "https://opencode.ai/inference/go",
+                  "EnumValues": null,
+                  "Description": "OpenCode inference base URL: https://opencode.ai/inference/go for Go, https://opencode.ai/inference for pay-as-you-go models. A trailing /openai/v1 or /anthropic is dropped. Auth files may override it with base_url."
+                },
+                {
+                  "Name": "model-prefix",
+                  "Type": "string",
+                  "Default": "opencode",
+                  "EnumValues": null,
+                  "Description": "Default CPA prefix for OpenCode keys (\"opencode\" -> opencode/kimi-k3). Empty adds no prefix. An auth file's own prefix field wins."
+                },
+                {
+                  "Name": "models-refresh-minutes",
+                  "Type": "integer",
+                  "Default": 60,
+                  "EnumValues": null,
+                  "Description": "How often to reload OpenCode's model list; 0 disables polling."
+                },
+                {
+                  "Name": "request-timeout-seconds",
+                  "Type": "integer",
+                  "Default": 600,
+                  "EnumValues": null,
+                  "Description": "Timeout for non-streaming requests and for stream response headers."
+                },
+                {
+                  "Name": "stream-idle-timeout-seconds",
+                  "Type": "integer",
+                  "Default": 300,
+                  "EnumValues": null,
+                  "Description": "Abort a stream after this long without upstream bytes."
+                },
+                {
+                  "Name": "data-dir",
+                  "Type": "string",
+                  "Default": "plugins/opencode-data",
+                  "EnumValues": null,
+                  "Description": "Directory for plugin data: the request log database (opencode.db) and the proxy list (proxies.json), relative to CPA's working directory."
+                },
+                {
+                  "Name": "log-retention",
+                  "Type": "integer",
+                  "Default": 100000,
+                  "EnumValues": null,
+                  "Description": "Most requests the request log keeps; 0 disables it."
+                },
+                {
+                  "Name": "log-retention-days",
+                  "Type": "integer",
+                  "Default": 30,
+                  "EnumValues": null,
+                  "Description": "Drop request log entries older than this many days; 0 keeps them until log-retention is reached."
+                }
+              ]
+            },
+            "capabilities": {
+              "auth_provider": true,
+              "model_provider": true,
+              "executor": true,
+              "executor_model_scope": "oauth",
+              "executor_input_formats": [
+                "chat-completions",
+                "responses",
+                "anthropic"
+              ],
+              "executor_output_formats": [
+                "chat-completions",
+                "responses",
+                "anthropic"
+              ],
+              "management_api": true,
+              "quota_provider": true,
+              "request_interceptor": true,
+              "request_interceptor_omit_body_before": true,
+              "request_interceptor_omit_body_after": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "plugin.reconfigure",
+        "request": {
+          "config_yaml": "base-url: '{{UPSTREAM}}/inference/go'\ndata-dir: '{{DATA_DIR}}'\nenabled: true\nlog-retention: -1\nmodel-prefix: /oc/\nmodels-refresh-minutes: -1\npriority: 0\nrequest-timeout-seconds: -5\nstream-idle-timeout-seconds: 0\n",
+          "schema_version": 0
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "GET",
+            "path": "/inference/go/v1/models",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ]
+            },
+            "body": ""
+          }
+        ],
+        "host_calls": [
+          {
+            "method": "host.log",
+            "request": {
+              "level": "warn",
+              "message": "opencode: ignoring negative models-refresh-minutes"
+            }
+          },
+          {
+            "method": "host.log",
+            "request": {
+              "level": "warn",
+              "message": "opencode: ignoring non-positive request-timeout-seconds"
+            }
+          },
+          {
+            "method": "host.log",
+            "request": {
+              "level": "warn",
+              "message": "opencode: ignoring non-positive stream-idle-timeout-seconds"
+            }
+          },
+          {
+            "method": "host.log",
+            "request": {
+              "level": "warn",
+              "message": "opencode: ignoring negative log-retention"
+            }
+          },
+          {
+            "method": "host.auth.list",
+            "request": {}
+          },
+          {
+            "method": "host.log",
+            "request": {
+              "level": "warn",
+              "message": "opencode: model catalog refresh failed",
+              "fields": {
+                "error": "GET /v1/models returned 503: maintenance"
+              }
+            }
+          }
+        ],
+        "response": {
+          "ok": true,
+          "result": {
+            "schema_version": 1,
+            "metadata": {
+              "Name": "OpenCode",
+              "Version": "9.9.9-snapshot",
+              "Author": "berry-shake",
+              "GitHubRepository": "https://github.com/berry-shake/cpa-opencode-plugin",
+              "Logo": "/v0/resource/plugins/opencode/logo.svg",
+              "ConfigFields": [
+                {
+                  "Name": "base-url",
+                  "Type": "string",
+                  "Default": "https://opencode.ai/inference/go",
+                  "EnumValues": null,
+                  "Description": "OpenCode inference base URL: https://opencode.ai/inference/go for Go, https://opencode.ai/inference for pay-as-you-go models. A trailing /openai/v1 or /anthropic is dropped. Auth files may override it with base_url."
+                },
+                {
+                  "Name": "model-prefix",
+                  "Type": "string",
+                  "Default": "opencode",
+                  "EnumValues": null,
+                  "Description": "Default CPA prefix for OpenCode keys (\"opencode\" -> opencode/kimi-k3). Empty adds no prefix. An auth file's own prefix field wins."
+                },
+                {
+                  "Name": "models-refresh-minutes",
+                  "Type": "integer",
+                  "Default": 60,
+                  "EnumValues": null,
+                  "Description": "How often to reload OpenCode's model list; 0 disables polling."
+                },
+                {
+                  "Name": "request-timeout-seconds",
+                  "Type": "integer",
+                  "Default": 600,
+                  "EnumValues": null,
+                  "Description": "Timeout for non-streaming requests and for stream response headers."
+                },
+                {
+                  "Name": "stream-idle-timeout-seconds",
+                  "Type": "integer",
+                  "Default": 300,
+                  "EnumValues": null,
+                  "Description": "Abort a stream after this long without upstream bytes."
+                },
+                {
+                  "Name": "data-dir",
+                  "Type": "string",
+                  "Default": "plugins/opencode-data",
+                  "EnumValues": null,
+                  "Description": "Directory for plugin data: the request log database (opencode.db) and the proxy list (proxies.json), relative to CPA's working directory."
+                },
+                {
+                  "Name": "log-retention",
+                  "Type": "integer",
+                  "Default": 100000,
+                  "EnumValues": null,
+                  "Description": "Most requests the request log keeps; 0 disables it."
+                },
+                {
+                  "Name": "log-retention-days",
+                  "Type": "integer",
+                  "Default": 30,
+                  "EnumValues": null,
+                  "Description": "Drop request log entries older than this many days; 0 keeps them until log-retention is reached."
+                }
+              ]
+            },
+            "capabilities": {
+              "auth_provider": true,
+              "model_provider": true,
+              "executor": true,
+              "executor_model_scope": "oauth",
+              "executor_input_formats": [
+                "chat-completions",
+                "responses",
+                "anthropic"
+              ],
+              "executor_output_formats": [
+                "chat-completions",
+                "responses",
+                "anthropic"
+              ],
+              "management_api": true,
+              "quota_provider": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "plugin.quiesce",
+        "request": null
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {}
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "auth.identifier",
+        "request": null
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "identifier": "opencode"
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.identifier",
+        "request": null
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "identifier": "opencode"
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "quota.identifier",
+        "request": null
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "identifier": "opencode"
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.http_request",
+        "request": {
+          "Method": "GET",
+          "URL": "https://opencode.ai/"
+        }
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "unsupported_operation",
+            "message": "opencode: raw HTTP requests are not supported",
+            "http_status": 501
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "quota.reset",
+        "request": null
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "unsupported_operation",
+            "message": "opencode: quota reset is not supported",
+            "http_status": 501
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "model.register",
+        "request": null
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": false,
+          "error": {
+            "code": "unknown_method",
+            "message": "unknown method: model.register"
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "plugin.shutdown",
+        "request": null
+      },
+      "output": {
+        "upstream_requests": [],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {}
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,505 @@
+{
+  "case": "session_claude_code_metadata",
+  "description": "X-Opencode-Session from Claude Code metadata.user_id (legacy string and JSON forms); a user_id without a session falls back to the conversation hash",
+  "setup": {
+    "version": "9.9.9-snapshot",
+    "config": {
+      "base-url": "{{UPSTREAM}}/inference/go",
+      "data-dir": "{{DATA_DIR}}",
+      "enabled": true,
+      "priority": 0
+    },
+    "credentials": [
+      {
+        "name": "opencode-k1.json",
+        "fields": {
+          "api_key": "oc_sk_test_fake_key_0001",
+          "type": "opencode"
+        }
+      }
+    ]
+  },
+  "upstream_script": [
+    {
+      "method": "POST",
+      "path": "/inference/go/anthropic/v1/messages",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"id\":\"msg_snap_1\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"kimi-k3\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"A greeting.\",\"signature\":\"sig-fake\"},{\"type\":\"text\",\"text\":\"Hello there!\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":12,\"cache_creation_input_tokens\":5,\"cache_read_input_tokens\":7,\"output_tokens\":9,\"output_tokens_details\":{\"thinking_tokens\":3}}}",
+      "chunks": []
+    },
+    {
+      "method": "POST",
+      "path": "/inference/go/anthropic/v1/messages",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"id\":\"msg_snap_1\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"kimi-k3\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"A greeting.\",\"signature\":\"sig-fake\"},{\"type\":\"text\",\"text\":\"Hello there!\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":12,\"cache_creation_input_tokens\":5,\"cache_read_input_tokens\":7,\"output_tokens\":9,\"output_tokens_details\":{\"thinking_tokens\":3}}}",
+      "chunks": []
+    },
+    {
+      "method": "POST",
+      "path": "/inference/go/anthropic/v1/messages",
+      "status": 200,
+      "header": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"id\":\"msg_snap_1\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"kimi-k3\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"A greeting.\",\"signature\":\"sig-fake\"},{\"type\":\"text\",\"text\":\"Hello there!\"}],\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"usage\":{\"input_tokens\":12,\"cache_creation_input_tokens\":5,\"cache_read_input_tokens\":7,\"output_tokens\":9,\"output_tokens_details\":{\"thinking_tokens\":3}}}",
+      "chunks": []
+    }
+  ],
+  "steps": [
+    {
+      "rpc": {
+        "method": "executor.execute",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "claude",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "max_tokens": 64,
+            "metadata": {
+              "user_id": "user_0123abcd_account_4567efgh_session_9f1c2d3e-0000-4000-8000-000000000001"
+            },
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ]
+          },
+          "SourceFormat": "claude",
+          "Payload": {
+            "model": "kimi-k3",
+            "max_tokens": 64,
+            "metadata": {
+              "user_id": "user_0123abcd_account_4567efgh_session_9f1c2d3e-0000-4000-8000-000000000001"
+            },
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ]
+          },
+          "Metadata": {
+            "request_path": "/v1/messages",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/anthropic/v1/messages",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Anthropic-Version": [
+                "2023-06-01"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "187"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "9f1c2d3e-0000-4000-8000-000000000001"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"max_tokens\":64,\"metadata\":{\"user_id\":\"user_0123abcd_account_4567efgh_session_9f1c2d3e-0000-4000-8000-000000000001\"},\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}]}"
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "Payload": {
+              "id": "msg_snap_1",
+              "type": "message",
+              "role": "assistant",
+              "model": "kimi-k3",
+              "content": [
+                {
+                  "type": "thinking",
+                  "thinking": "A greeting.",
+                  "signature": "sig-fake"
+                },
+                {
+                  "type": "text",
+                  "text": "Hello there!"
+                }
+              ],
+              "stop_reason": "end_turn",
+              "stop_sequence": null,
+              "usage": {
+                "input_tokens": 12,
+                "cache_creation_input_tokens": 5,
+                "cache_read_input_tokens": 7,
+                "output_tokens": 9,
+                "output_tokens_details": {
+                  "thinking_tokens": 3
+                }
+              }
+            },
+            "Headers": {
+              "Content-Type": [
+                "application/json"
+              ]
+            },
+            "Metadata": null
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.execute",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "claude",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "max_tokens": 64,
+            "metadata": {
+              "user_id": "{\"device_id\":\"dev-1\",\"account_uuid\":\"acc-1\",\"session_id\":\"9f1c2d3e-0000-4000-8000-000000000002\"}"
+            },
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ]
+          },
+          "SourceFormat": "claude",
+          "Payload": {
+            "model": "kimi-k3",
+            "max_tokens": 64,
+            "metadata": {
+              "user_id": "{\"device_id\":\"dev-1\",\"account_uuid\":\"acc-1\",\"session_id\":\"9f1c2d3e-0000-4000-8000-000000000002\"}"
+            },
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ]
+          },
+          "Metadata": {
+            "request_path": "/v1/messages",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/anthropic/v1/messages",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Anthropic-Version": [
+                "2023-06-01"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "220"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "9f1c2d3e-0000-4000-8000-000000000002"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"max_tokens\":64,\"metadata\":{\"user_id\":\"{\\\"device_id\\\":\\\"dev-1\\\",\\\"account_uuid\\\":\\\"acc-1\\\",\\\"session_id\\\":\\\"9f1c2d3e-0000-4000-8000-000000000002\\\"}\"},\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}]}"
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "Payload": {
+              "id": "msg_snap_1",
+              "type": "message",
+              "role": "assistant",
+              "model": "kimi-k3",
+              "content": [
+                {
+                  "type": "thinking",
+                  "thinking": "A greeting.",
+                  "signature": "sig-fake"
+                },
+                {
+                  "type": "text",
+                  "text": "Hello there!"
+                }
+              ],
+              "stop_reason": "end_turn",
+              "stop_sequence": null,
+              "usage": {
+                "input_tokens": 12,
+                "cache_creation_input_tokens": 5,
+                "cache_read_input_tokens": 7,
+                "output_tokens": 9,
+                "output_tokens_details": {
+                  "thinking_tokens": 3
+                }
+              }
+            },
+            "Headers": {
+              "Content-Type": [
+                "application/json"
+              ]
+            },
+            "Metadata": null
+          }
+        }
+      }
+    },
+    {
+      "rpc": {
+        "method": "executor.execute",
+        "request": {
+          "AuthID": "opencode-k1.json",
+          "AuthProvider": "opencode",
+          "Model": "kimi-k3",
+          "Format": "claude",
+          "Stream": false,
+          "Alt": "",
+          "Headers": {
+            "Accept": [
+              "application/json"
+            ],
+            "Authorization": [
+              "Bearer sk-cpa-client-fake"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "User-Agent": [
+              "snapshot-client/1.0"
+            ]
+          },
+          "Query": null,
+          "OriginalRequest": {
+            "model": "opencode/kimi-k3",
+            "max_tokens": 64,
+            "metadata": {
+              "user_id": "user_0123abcd"
+            },
+            "system": "Be brief.",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ]
+          },
+          "SourceFormat": "claude",
+          "Payload": {
+            "model": "kimi-k3",
+            "max_tokens": 64,
+            "metadata": {
+              "user_id": "user_0123abcd"
+            },
+            "system": "Be brief.",
+            "messages": [
+              {
+                "role": "user",
+                "content": "Say hello"
+              }
+            ]
+          },
+          "Metadata": {
+            "request_path": "/v1/messages",
+            "requested_model": "opencode/kimi-k3",
+            "selected_auth_id": "opencode-k1.json",
+            "selected_auth_index": "idx-1"
+          },
+          "StorageJSON": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthMetadata": {
+            "api_key": "oc_sk_test_fake_key_0001",
+            "type": "opencode"
+          },
+          "AuthAttributes": null,
+          "host_callback_id": "host-callback-1"
+        }
+      },
+      "output": {
+        "upstream_requests": [
+          {
+            "method": "POST",
+            "path": "/inference/go/anthropic/v1/messages",
+            "query": "",
+            "header": {
+              "Accept": [
+                "application/json"
+              ],
+              "Accept-Encoding": [
+                "gzip"
+              ],
+              "Anthropic-Version": [
+                "2023-06-01"
+              ],
+              "Authorization": [
+                "Bearer oc_sk_test_fake_key_0001"
+              ],
+              "Content-Length": [
+                "146"
+              ],
+              "Content-Type": [
+                "application/json"
+              ],
+              "User-Agent": [
+                "cpa-opencode-plugin/9.9.9-snapshot"
+              ],
+              "X-Opencode-Session": [
+                "cpa_90613463ca049d637ab26b4838c4a803"
+              ]
+            },
+            "body": "{\"model\":\"kimi-k3\",\"max_tokens\":64,\"metadata\":{\"user_id\":\"user_0123abcd\"},\"system\":\"Be brief.\",\"messages\":[{\"role\":\"user\",\"content\":\"Say hello\"}]}"
+          }
+        ],
+        "host_calls": [],
+        "response": {
+          "ok": true,
+          "result": {
+            "Payload": {
+              "id": "msg_snap_1",
+              "type": "message",
+              "role": "assistant",
+              "model": "kimi-k3",
+              "content": [
+                {
+                  "type": "thinking",
+                  "thinking": "A greeting.",
+                  "signature": "sig-fake"
+                },
+                {
+                  "type": "text",
+                  "text": "Hello there!"
+                }
+              ],
+              "stop_reason": "end_turn",
+              "stop_sequence": null,
+              "usage": {
+                "input_tokens": 12,
+                "cache_creation_input_tokens": 5,
+                "cache_read_input_tokens": 7,
+                "output_tokens": 9,
+                "output_tokens_details": {
+                  "thinking_tokens": 3
+                }
+              }
+            },
+            "Headers": {
+              "Content-Type": [
+                "application/json"
+              ]
+            },
+            "Metadata": null
+          }
+        }
+      }
+    }
+  ]
+}
