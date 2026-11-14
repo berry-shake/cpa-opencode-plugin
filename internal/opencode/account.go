@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -152,19 +151,16 @@ func QuotaFromAccount(info AccountInfo) pluginapi.QuotaFetchResponse {
 	for _, window := range []struct {
 		name  string
 		value *GoWindow
-	}{{"5h", info.Go.Rolling}, {"weekly", info.Go.Weekly}, {"monthly", info.Go.Monthly}} {
+	}{{"5h", info.Go.Rolling}, {"7d", info.Go.Weekly}, {"monthly", info.Go.Monthly}} {
 		if window.value == nil {
 			continue
 		}
-		description := fmt.Sprintf("%s%% used", strconv.FormatFloat(window.value.Percent, 'f', -1, 64))
-		if window.value.Limited {
-			description = "rate limited until reset"
-		}
+		// No description: CPA's panel would show it in place of the window
+		// name. A rate-limited window reads as 0% left.
 		buckets = append(buckets, pluginapi.QuotaBucket{
 			Window:            window.name,
 			RemainingFraction: window.value.Left(),
 			ResetTime:         window.value.ResetsAt,
-			Description:       description,
 		})
 	}
 	if len(buckets) > 0 {

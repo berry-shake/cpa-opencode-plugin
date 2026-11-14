@@ -226,7 +226,7 @@ OpenCode Go 要求每个请求带 `x-opencode-session`，没带会返回 400 `Mi
 - OpenCode 没有查询余额的 API（按量付费的余额只在 Console 网页里看得到），所以插件不显示余额。按量付费请求的花费 OpenCode 会写在响应的 `usage.cost` 里。
 - 每个 Key 的查询结果缓存 60 秒。
 
-CPA 原生额度面板显示 **OpenCode Go** 一组，三个窗口各一条剩余比例进度条，带重置时间；被限流的窗口剩余显示为 0。
+CPA 原生额度面板显示 **OpenCode Go** 一组，`5h` / `7d` / `monthly` 三个窗口各一条剩余比例进度条，带重置时间；被限流的窗口剩余显示为 0。
 
 ## 管理页
 
