@@ -455,7 +455,7 @@
             "Body": {
               "items": [
                 {
-                  "id": "3",
+                  "id": "4",
                   "time": "<volatile>",
                   "endpoint": "/openai/v1/chat/completions",
                   "model": "opencode/kimi-k3",
@@ -476,7 +476,7 @@
                   "attempts": 1
                 },
                 {
-                  "id": "2",
+                  "id": "3",
                   "time": "<volatile>",
                   "endpoint": "/openai/v1/chat/completions",
                   "model": "opencode/kimi-k3",
@@ -494,6 +494,26 @@
                   "client_path": "/v1/chat/completions",
                   "user_agent": "snapshot-client/1.0",
                   "auth_index": "idx-2",
+                  "attempts": 1
+                },
+                {
+                  "id": "2",
+                  "time": "<volatile>",
+                  "endpoint": "",
+                  "model": "opencode/kimi-k3",
+                  "stream": false,
+                  "status": "error",
+                  "http_status": 400,
+                  "auth_id": "opencode-k1.json",
+                  "duration_ms": "<volatile>",
+                  "input_tokens": 0,
+                  "output_tokens": 0,
+                  "cached_tokens": 0,
+                  "error_code": "unsupported_format",
+                  "error": "opencode: unsupported executor format gemini",
+                  "error_phase": "request",
+                  "user_agent": "snapshot-client/1.0",
+                  "auth_index": "idx-1",
                   "attempts": 1
                 },
                 {
@@ -518,14 +538,14 @@
                   "attempts": 1
                 }
               ],
-              "total": 3,
+              "total": 4,
               "offset": 0,
               "retention": 100000,
               "retention_days": 30,
               "summary": {
-                "requests": 3,
+                "requests": 4,
                 "success": 0,
-                "failed": 3,
+                "failed": 4,
                 "input_tokens": 0,
                 "output_tokens": 0,
                 "cached_tokens": 0,
