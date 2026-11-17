@@ -274,6 +274,7 @@
                 "checked_at": "2026-01-02T03:04:05Z",
                 "last_error": "/v1/models returned no models"
               },
+              "runtime": "<volatile>",
               "credentials": [
                 {
                   "auth_index": "idx-1",
